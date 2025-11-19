@@ -47,3 +47,13 @@ class TenantReport(Base):
     spo_available = Column(Boolean, default=False)
     report_data = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+    
+    key = Column(String(100), primary_key=True, index=True)
+    value = Column(Text, nullable=False)
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
