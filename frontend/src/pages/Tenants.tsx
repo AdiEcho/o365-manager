@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Edit2, Users, Award, Globe, ShieldCheck, FileText } from 'lucide-react'
+import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Edit2, Users, Award, Globe, ShieldCheck, FileText, RefreshCw, AlertCircle, Ban, HelpCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { formatDate } from '@/utils/utils'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
@@ -94,6 +94,17 @@ export function Tenants() {
     },
   })
 
+  const checkSpoMutation = useMutation({
+    mutationFn: (id: number) => tenantApi.checkSpoStatus(id),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['tenants'] })
+      toast.success(`SPO 状态检查完成: ${response.data.message}`)
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+    },
+  })
+
   const handleCreate = () => {
     if (!formData.tenant_id || !formData.client_id || !formData.client_secret) {
       toast.error('请填写必填字段')
@@ -142,6 +153,46 @@ export function Tenants() {
       remarks: '',
     })
     setEditingTenant(null)
+  }
+
+  const getSpoStatusDisplay = (spoStatus?: string) => {
+    switch (spoStatus) {
+      case 'available':
+        return {
+          icon: CheckCircle2,
+          text: 'SPO 可用',
+          color: 'text-green-600 dark:text-green-400',
+          bgColor: 'bg-green-50 dark:bg-green-900/20'
+        }
+      case 'unavailable':
+        return {
+          icon: XCircle,
+          text: 'SPO 不可用',
+          color: 'text-yellow-600 dark:text-yellow-400',
+          bgColor: 'bg-yellow-50 dark:bg-yellow-900/20'
+        }
+      case 'no_subscription':
+        return {
+          icon: Ban,
+          text: '无 SPO 订阅',
+          color: 'text-gray-600 dark:text-gray-400',
+          bgColor: 'bg-gray-50 dark:bg-gray-900/20'
+        }
+      case 'error':
+        return {
+          icon: AlertCircle,
+          text: '检查出错',
+          color: 'text-red-600 dark:text-red-400',
+          bgColor: 'bg-red-50 dark:bg-red-900/20'
+        }
+      default:
+        return {
+          icon: HelpCircle,
+          text: '未检查',
+          color: 'text-gray-400 dark:text-gray-500',
+          bgColor: 'bg-gray-50 dark:bg-gray-800'
+        }
+    }
   }
 
   return (
@@ -200,6 +251,23 @@ export function Tenants() {
                           <div>客户端 ID: {tenant.client_id}</div>
                           {tenant.remarks && <div>备注: {tenant.remarks}</div>}
                           <div>创建时间: {formatDate(tenant.created_at)}</div>
+                          {(() => {
+                            const spoDisplay = getSpoStatusDisplay(tenant.spo_status)
+                            const SpoIcon = spoDisplay.icon
+                            return (
+                              <div className="flex items-center gap-2 pt-1">
+                                <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${spoDisplay.bgColor} ${spoDisplay.color}`}>
+                                  <SpoIcon className="h-3 w-3 mr-1" />
+                                  {spoDisplay.text}
+                                </span>
+                                {tenant.spo_checked_at && (
+                                  <span className="text-xs text-gray-500">
+                                    {formatDate(tenant.spo_checked_at)}
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })()}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
@@ -226,15 +294,32 @@ export function Tenants() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
                         onClick={() => validateMutation.mutate(tenant.id)}
                         disabled={validateMutation.isPending}
                       >
                         验证凭据
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => checkSpoMutation.mutate(tenant.id)}
+                        disabled={checkSpoMutation.isPending}
+                      >
+                        {checkSpoMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            检查中...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            检查 SPO
+                          </>
+                        )}
                       </Button>
                     </div>
                     <div className="pt-3 border-t">

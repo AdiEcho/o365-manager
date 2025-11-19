@@ -33,6 +33,9 @@ class TenantResponse(BaseModel):
     is_selected: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
+    spo_status: Optional[str] = None
+    spo_message: Optional[str] = None
+    spo_checked_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -141,3 +144,9 @@ class ChangePasswordRequest(BaseModel):
 class MessageResponse(BaseModel):
     message: str
     detail: Optional[str] = None
+
+
+class SpoStatusResponse(BaseModel):
+    status: str = Field(..., description="SPO status: available|unavailable|no_subscription|unknown|error")
+    message: str = Field(..., description="Status message")
+    checked_at: datetime = Field(..., description="Time when SPO status was checked")

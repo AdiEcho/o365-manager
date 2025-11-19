@@ -46,6 +46,15 @@ export interface Tenant {
   is_selected: boolean
   created_at: string
   updated_at?: string
+  spo_status?: string
+  spo_message?: string
+  spo_checked_at?: string
+}
+
+export interface SpoStatusResponse {
+  status: string
+  message: string
+  checked_at: string
 }
 
 export interface TenantCreate {
@@ -135,6 +144,7 @@ export const tenantApi = {
   update: (id: number, data: Partial<TenantCreate>) => api.put<Tenant>(`/tenants/${id}`, data),
   delete: (id: number) => api.delete(`/tenants/${id}`),
   validate: (id: number) => api.get(`/tenants/${id}/validate`),
+  checkSpoStatus: (id: number) => api.get<SpoStatusResponse>(`/tenants/${id}/spo-status`),
 }
 
 // User APIs

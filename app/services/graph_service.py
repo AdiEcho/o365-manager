@@ -150,3 +150,50 @@ class GraphAPIService:
             except Exception as e:
                 results.append({"success": False, "error": str(e), "data": user_data})
         return results
+    
+    async def check_spo_status(self) -> Dict[str, Any]:
+        """
+        Check SharePoint Online status by accessing site root drive permissions
+        Returns: {"status": "available"|"unavailable"|"no_subscription"|"unknown", "message": str}
+        """
+        endpoint = "/sites/root/drive/root/permissions"
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, headers=self.get_headers()) as response:
+                    status_code = response.status
+                    
+                    if status_code == 200:
+                        data = await response.json()
+                        value = data.get("value", [])
+                        if len(value) > 0:
+                            return {
+                                "status": "available",
+                                "message": "SharePoint Online 可用"
+                            }
+                        else:
+                            return {
+                                "status": "unavailable",
+                                "message": "SharePoint Online 不可用"
+                            }
+                    elif status_code == 400:
+                        return {
+                            "status": "no_subscription",
+                            "message": "无 SharePoint Online 订阅"
+                        }
+                    elif status_code in [404, 429, 502]:
+                        return {
+                            "status": "unavailable",
+                            "message": "SharePoint Online 不可用"
+                        }
+                    else:
+                        return {
+                            "status": "unknown",
+                            "message": f"未知状态 (HTTP {status_code})"
+                        }
+            except Exception as e:
+                return {
+                    "status": "error",
+                    "message": f"检查失败: {str(e)}"
+                }

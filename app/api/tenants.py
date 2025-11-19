@@ -2,13 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from typing import List
+from datetime import datetime
 from app.database import get_db
 from app.models import Tenant
 from app.schemas import (
     TenantCreate, TenantUpdate, TenantResponse, 
-    TenantListResponse, MessageResponse
+    TenantListResponse, MessageResponse, SpoStatusResponse
 )
 from app.services.msal_service import MSALService
+from app.services.graph_service import GraphAPIService
 
 router = APIRouter(prefix="/api/tenants", tags=["Tenants"])
 
@@ -144,4 +146,46 @@ async def validate_tenant(
     
     return MessageResponse(
         message="Tenant credentials validated successfully"
+    )
+
+
+@router.get("/{tenant_id}/spo-status", response_model=SpoStatusResponse)
+async def check_tenant_spo_status(
+    tenant_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = result.scalar_one_or_none()
+    
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    
+    msal_service = MSALService(
+        tenant_id=tenant.tenant_id,
+        client_id=tenant.client_id,
+        client_secret=tenant.client_secret
+    )
+    
+    validation_result = await msal_service.validate_credentials()
+    if not validation_result["valid"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid tenant credentials: {validation_result.get('error')}"
+        )
+    
+    graph_service = GraphAPIService(msal_service)
+    spo_result = await graph_service.check_spo_status()
+    
+    checked_at = datetime.now()
+    tenant.spo_status = spo_result["status"]
+    tenant.spo_message = spo_result["message"]
+    tenant.spo_checked_at = checked_at
+    
+    await db.flush()
+    await db.refresh(tenant)
+    
+    return SpoStatusResponse(
+        status=spo_result["status"],
+        message=spo_result["message"],
+        checked_at=checked_at
     )
