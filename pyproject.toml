@@ -1,5 +1,5 @@
 [project]
-name = "office365-manager"
+name = "o365-manager"
 version = "1.0.0"
 description = "Async multi-tenant management system for Microsoft 365 using FastAPI and MSAL"
 readme = "README.md"

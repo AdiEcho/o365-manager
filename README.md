@@ -110,7 +110,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ```bash
 git clone <repository-url>
-cd office365-manager
+cd o365-manager
 ```
 
 #### 第 3 步: 安装后端依赖
@@ -532,7 +532,7 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/path/to/office365-manager
+WorkingDirectory=/path/to/o365-manager
 ExecStart=/usr/local/bin/uv run python run.py
 Restart=always
 
@@ -664,7 +664,7 @@ fuser o365_manager.db
 ## 📁 项目结构
 
 ```
-office365-manager/
+o365-manager/
 ├── app/                          # 后端应用
 │   ├── api/                      # API 路由
 │   │   ├── tenants.py           # 租户管理
