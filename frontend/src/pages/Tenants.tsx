@@ -1054,78 +1054,67 @@ export function Tenants() {
                   </p>
                 </div>
                 
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">
-                      ✓ 核心权限（必需）
-                    </p>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground ml-4">
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">User.ReadWrite.All</strong> - 用户管理（创建、删除、更新、启用/禁用用户）
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">Directory.ReadWrite.All</strong> - 目录读写（管理目录对象和用户属性）
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">Organization.Read.All</strong> - 读取组织信息和许可证数据
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">Reports.Read.All</strong> - 生成 OneDrive 和 Exchange 使用情况报告
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">
-                      ⭐ 高级功能权限（推荐）
-                    </p>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground ml-4">
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">RoleManagement.ReadWrite.Directory</strong> - 角色管理（提升/撤销全局管理员权限）
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">Domain.ReadWrite.All</strong> - 域名管理（添加、验证、删除自定义域名）
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">Application.ReadWrite.All</strong> - 应用配置和自动更新客户端密钥
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-400 mb-2">
-                      ◇ 可选权限
-                    </p>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground ml-4">
-                      <li className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
-                        <div>
-                          <strong className="text-foreground">Sites.FullControl.All</strong> - SharePoint Online 状态检查
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <strong>⚠️ 前置要求：</strong>
+                  </p>
+                  <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                    此操作需要应用已拥有 <strong>Application.ReadWrite.All</strong> 权限并已授予管理员同意。如果尚未配置，请先在 Azure Portal 手动添加此权限。
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">应用程序权限：</p>
+                  <ul className="space-y-1.5 text-xs text-muted-foreground ml-4">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">User.ReadWrite.All</strong> - 用户管理（创建、删除、更新、启用/禁用用户）
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">Directory.ReadWrite.All</strong> - 目录读写（管理目录对象和用户属性）
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">Organization.Read.All</strong> - 读取组织信息和许可证数据
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">Reports.Read.All</strong> - 生成 OneDrive 和 Exchange 使用情况报告
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">RoleManagement.ReadWrite.Directory</strong> - 角色管理（提升/撤销全局管理员权限）
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">Domain.ReadWrite.All</strong> - 域名管理（添加、验证、删除自定义域名）
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">Application.ReadWrite.All</strong> - 应用配置和自动更新客户端密钥
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
+                      <div>
+                        <strong className="text-foreground">Sites.FullControl.All</strong> - SharePoint Online 状态检查
+                      </div>
+                    </li>
+                  </ul>
                 </div>
                 
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -1133,7 +1122,7 @@ export function Tenants() {
                     <strong>说明：</strong>
                   </p>
                   <ul className="mt-2 space-y-1 text-sm text-blue-700 dark:text-blue-300 list-disc list-inside">
-                    <li>系统将自动配置所有上述权限（包括核心、高级和可选权限）</li>
+                    <li>系统将自动配置所有上述权限</li>
                     <li>权限配置后需要全局管理员进行授权同意</li>
                     <li>配置完成后会显示管理员同意链接</li>
                     <li>请使用全局管理员账户打开链接完成授权</li>
