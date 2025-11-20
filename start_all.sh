@@ -7,6 +7,7 @@ echo ""
 
 echo "[1/2] 构建前端..."
 cd frontend
+npm install
 npm run build
 if [ $? -ne 0 ]; then
     echo "前端构建失败!"
@@ -15,6 +16,8 @@ fi
 cd ..
 
 echo "[2/2] 启动应用服务器..."
+uv sync
+uv lock --upgrade
 uv run run.py &
 APP_PID=$!
 
@@ -23,10 +26,7 @@ echo "========================================"
 echo "启动完成!"
 echo "========================================"
 echo "应用地址: http://localhost:8000"
-echo "API 文档: http://localhost:8000/docs"
 echo "========================================"
-echo ""
-echo "提示: 前后端已集成，只需访问 http://localhost:8000"
 echo ""
 echo "按 Ctrl+C 停止服务..."
 

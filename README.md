@@ -91,7 +91,53 @@
 
 ## 🚀 快速开始
 
-### 方法 1: 一键启动（推荐）
+### 方法 1: docker 启动
+
+#### 1. 使用 Docker 已构建镜像
+
+```bash
+# 运行容器
+docker run -d \
+  -p 8000:8000 \
+  -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
+  -e SECRET_KEY=your-secret-key \
+  --name o365-manager \
+  adiecho/o365-manager:latest
+```
+
+#### 2. 自主构建 Docker 镜像 
+
+```bash
+# 构建镜像
+docker build -t o365-manager .
+
+# 运行容器
+docker run -d \
+  -p 8000:8000 \
+  -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
+  -e SECRET_KEY=your-secret-key \
+  --name o365-manager \
+  o365-manager
+```
+
+#### 使用 Docker Compose
+
+```bash
+wget https://raw.githubusercontent.com/AdiEcho/o365-manager/refs/heads/master/docker-compose.yml
+
+# 启动服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+```
+
+### 方法 2: 一键启动
 
 **Windows:**
 ```bash
@@ -104,7 +150,7 @@ chmod +x start_all.sh
 ./start_all.sh
 ```
 
-### 方法 2: 分步安装
+### 方法 3: 分步安装
 
 #### 第 1 步: 安装 uv
 
@@ -119,7 +165,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 #### 第 2 步: 克隆项目
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/AdiEcho/o365-manager.git
 cd o365-manager
 ```
 
@@ -142,11 +188,12 @@ cp .env.example .env
 # 编辑 .env 文件
 ```
 
-#### 第 5 步: 安装前端依赖
+#### 第 5 步: 安装前端依赖并构建
 
 ```bash
 cd frontend
 npm install
+npm run build
 cd ..
 ```
 
@@ -155,23 +202,12 @@ cd ..
 **启动后端:**
 ```bash
 # 使用 uv
-uv run python run.py
-
-# 或直接使用
-python run.py
-```
-
-**启动前端（新终端）:**
-```bash
-cd frontend
-npm run dev
+uv run run.py
 ```
 
 ### 访问应用
 
-- **前端界面**: http://localhost:3000
-- **后端 API**: http://localhost:8000
-- **API 文档**: http://localhost:8000/docs
+- **管理页面**: http://localhost:8000
 - **健康检查**: http://localhost:8000/health
 
 ---
@@ -300,39 +336,6 @@ npm run dev
 - **完整视图**: 卡片式显示，信息更详细
 
 ---
-
-## 🚢 部署指南
-
-### Docker 部署
-
-#### 使用 Docker
-
-```bash
-# 构建镜像
-docker build -t o365-manager .
-
-# 运行容器
-docker run -d \
-  -p 8000:8000 \
-  -p 3000:3000 \
-  -v $(pwd)/data:/app/data \
-  -e SECRET_KEY=your-secret-key \
-  --name o365-manager \
-  o365-manager
-```
-
-#### 使用 Docker Compose
-
-```bash
-# 启动服务
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-
-# 停止服务
-docker-compose down
-```
 
 ### 生产环境部署
 

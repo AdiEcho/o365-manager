@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   o365-manager:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: adiecho/o365-manager:latest
     container_name: o365-manager
     ports:
       - "8000:8000"
