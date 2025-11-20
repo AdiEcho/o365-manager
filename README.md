@@ -17,7 +17,6 @@
 - [快速开始](#快速开始)
 - [Azure AD 配置](#azure-ad-配置)
 - [使用指南](#使用指南)
-- [API 端点](#api-端点)
 - [部署指南](#部署指南)
 - [故障排除](#故障排除)
 - [项目结构](#项目结构)
@@ -48,11 +47,14 @@
 - ✅ **多租户管理** - 集中管理多个 Microsoft 365 租户
 - ✅ **异步架构** - 基于 FastAPI 的高性能异步 API
 - ✅ **用户管理** - 创建、删除、启用、禁用用户，支持批量操作
-- ✅ **许可证管理** - 查看租户订阅和许可证使用情况
+- ✅ **许可证管理** - 查看租户订阅和许可证使用情况，支持缓存和手动刷新
 - ✅ **域名管理** - 添加、验证、删除自定义域名
 - ✅ **角色管理** - 提升/撤销全局管理员权限
 - ✅ **报告生成** - 生成 OneDrive 和 Exchange 使用报告
-- ✅ **现代化 UI** - 响应式设计，完美适配移动端
+- ✅ **权限配置** - 一键配置应用 API 权限并生成管理员同意链接
+- ✅ **密钥管理** - 自动更新客户端密钥，支持删除旧密钥
+- ✅ **凭据验证** - 自动验证租户凭据和 SPO 可用性
+- ✅ **现代化 UI** - 响应式设计，完美适配移动端，支持紧凑/完整视图切换
 - ✅ **Graph API 集成** - 完整的 Microsoft Graph API 支持
 
 ---
@@ -70,12 +72,20 @@
 - 管理员同意已授予
 
 ### 必需的 Graph API 权限
+
+#### 核心权限（必需）
 - `User.ReadWrite.All` - 用户管理
 - `Directory.ReadWrite.All` - 目录管理
+- `Organization.Read.All` - 组织信息
+- `Reports.Read.All` - 报告生成
+
+#### 高级功能权限（推荐）
 - `RoleManagement.ReadWrite.Directory` - 角色管理
 - `Domain.ReadWrite.All` - 域名管理
-- `Reports.Read.All` - 报告生成
-- `Organization.Read.All` - 组织信息
+- `Application.ReadWrite.All` - 应用权限配置和密钥更新
+
+#### 可选权限
+- `Sites.FullControl.All` - SharePoint 在线状态检查
 
 ---
 
@@ -195,28 +205,33 @@ npm run dev
 
 ### 步骤 4: 配置 API 权限
 
+#### 方法 1: 使用系统自动配置（推荐）⭐
+
+1. 手动添加 `Application.ReadWrite.All` 权限（用于配置其他权限）
+2. 授予管理员同意
+3. 在系统中添加租户后，点击 **"配置权限"** 按钮
+4. 系统将自动配置所需的所有权限
+5. 点击生成的管理员同意链接完成授权
+
+#### 方法 2: 手动配置
+
 1. 在应用程序页面，点击 **API 权限**
 2. 点击 **添加权限** > **Microsoft Graph**
 3. 选择 **应用程序权限**（不是委托权限）
 4. 添加以下权限:
 
-#### 用户管理
-- `User.ReadWrite.All`
-- `User.ManageIdentities.All`
+**核心权限（必需）:**
+- `User.ReadWrite.All` - 用户管理
+- `Directory.ReadWrite.All` - 目录读写
+- `Organization.Read.All` - 组织信息
+- `Reports.Read.All` - 使用报告
 
-#### 目录和角色管理
-- `Directory.ReadWrite.All`
-- `RoleManagement.ReadWrite.Directory`
+**高级功能（推荐）:**
+- `RoleManagement.ReadWrite.Directory` - 角色管理
+- `Domain.ReadWrite.All` - 域名管理
+- `Application.ReadWrite.All` - 应用配置和密钥管理
 
-#### 域名管理
-- `Domain.ReadWrite.All`
-
-#### 报告和组织
-- `Reports.Read.All`
-- `Organization.Read.All`
-
-#### 可选权限
-- `Application.ReadWrite.All` - 更新应用密钥
+**可选功能:**
 - `Sites.FullControl.All` - SharePoint 检查
 
 ### 步骤 5: 授予管理员同意
@@ -241,212 +256,48 @@ npm run dev
 
 ## 📖 使用指南
 
-### 1. 添加第一个租户
+### 添加第一个租户
 
 #### 通过前端界面
 
 1. 打开 http://localhost:3000
-2. 点击左侧菜单 **"租户管理"**
-3. 点击 **"添加租户"** 按钮
-4. 填写表单:
+2. 完成初始化设置（创建管理员账户）
+3. 点击左侧菜单 **"租户管理"**
+4. 点击 **"添加租户"** 按钮
+5. 填写表单:
    - **租户 ID**: Azure AD 租户 ID
    - **客户端 ID**: 应用程序（客户端）ID
    - **客户端密钥**: 创建的客户端密钥值
    - **租户名称**: 自定义名称（可选）
    - **备注**: 备注信息（可选）
-5. 点击 **"创建"**
+6. 点击 **"创建"**
+7. 点击 **"验证凭据"** 确保配置正确
+8. 点击 **"配置权限"** 自动配置 API 权限（如果还未配置）
+9. 使用生成的管理员同意链接完成授权
 
-#### 通过 API
+### 租户管理功能
 
-```bash
-curl -X POST "http://localhost:8000/api/tenants" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tenant_id": "your-tenant-id",
-    "client_id": "your-client-id",
-    "client_secret": "your-client-secret",
-    "tenant_name": "我的组织",
-    "remarks": "生产环境"
-  }'
-```
+#### 凭据管理
+- **验证凭据**: 测试租户凭据是否有效
+- **更新密钥**: 自动生成新的客户端密钥（过期时间 2099-12-31）
+- **删除旧密钥**: 更新密钥时可选择删除当前使用的旧密钥
 
-### 2. 选择租户
+#### 权限配置
+- **配置权限**: 一键配置所需的 Microsoft Graph API 权限
+- **自动生成同意链接**: 配置完成后自动生成管理员同意 URL
+- 配置的权限包括：
+  - `User.Read.All` - 读取所有用户
+  - `Organization.Read.All` - 读取组织信息
+  - `Reports.Read.All` - 读取使用报告
+  - `Directory.Read.All` - 读取目录数据
 
-所有操作都针对当前选中的租户：
+#### SPO 状态检查
+- **检查 SPO**: 验证 SharePoint Online 是否可用
+- 显示 SPO 可用性状态
 
-1. 在租户列表中找到租户
-2. 点击 **"选择"** 按钮
-3. 租户卡片会高亮显示
-
-### 3. 验证租户凭据
-
-```bash
-curl "http://localhost:8000/api/tenants/1/validate"
-```
-
-### 4. 创建用户
-
-#### 单个用户
-
-```bash
-curl -X POST "http://localhost:8000/api/o365/users" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "display_name": "张三",
-    "user_principal_name": "zhangsan@yourdomain.com",
-    "mail_nickname": "zhangsan",
-    "password": "SecurePass123!",
-    "usage_location": "CN"
-  }'
-```
-
-#### 批量创建用户
-
-```bash
-curl -X POST "http://localhost:8000/api/o365/users/batch" \
-  -H "Content-Type: application/json" \
-  -d '[
-    {
-      "display_name": "李四",
-      "user_principal_name": "lisi@yourdomain.com",
-      "mail_nickname": "lisi",
-      "password": "SecurePass123!",
-      "usage_location": "CN"
-    },
-    {
-      "display_name": "王五",
-      "user_principal_name": "wangwu@yourdomain.com",
-      "mail_nickname": "wangwu",
-      "password": "SecurePass123!",
-      "usage_location": "CN"
-    }
-  ]'
-```
-
-### 5. 管理用户
-
-#### 启用/禁用用户
-
-```bash
-# 禁用用户
-curl -X POST "http://localhost:8000/api/o365/users/{user_id}/disable"
-
-# 启用用户
-curl -X POST "http://localhost:8000/api/o365/users/{user_id}/enable"
-```
-
-#### 搜索用户
-
-```bash
-curl "http://localhost:8000/api/o365/users/search?keyword=zhang"
-```
-
-### 6. 查看许可证
-
-```bash
-curl "http://localhost:8000/api/o365/licenses"
-```
-
-### 7. 管理域名
-
-```bash
-# 添加域名
-curl -X POST "http://localhost:8000/api/o365/domains?domain_name=example.com"
-
-# 验证域名
-curl -X POST "http://localhost:8000/api/o365/domains/example.com/verify"
-
-# 列出域名
-curl "http://localhost:8000/api/o365/domains"
-```
-
-### 8. 角色管理
-
-```bash
-# 提升为全局管理员
-curl -X POST "http://localhost:8000/api/o365/roles/{user_id}/promote"
-
-# 撤销全局管理员
-curl -X POST "http://localhost:8000/api/o365/roles/{user_id}/demote"
-```
-
-### 9. 生成报告
-
-```bash
-# OneDrive 使用报告
-curl "http://localhost:8000/api/o365/reports/onedrive?period=D7" \
-  --output onedrive_report.csv
-
-# Exchange 使用报告
-curl "http://localhost:8000/api/o365/reports/exchange?period=D7" \
-  --output exchange_report.csv
-```
-
----
-
-## 🔌 API 端点
-
-### 租户管理 `/api/tenants`
-
-| 方法 | 端点 | 说明 |
-|------|------|------|
-| GET | `/api/tenants` | 列出所有租户 |
-| POST | `/api/tenants` | 添加新租户 |
-| GET | `/api/tenants/{id}` | 获取租户详情 |
-| PUT | `/api/tenants/{id}` | 更新租户 |
-| DELETE | `/api/tenants/{id}` | 删除租户 |
-| POST | `/api/tenants/{id}/select` | 选择当前租户 |
-| GET | `/api/tenants/{id}/validate` | 验证租户凭据 |
-| GET | `/api/tenants/selected/current` | 获取当前选中的租户 |
-
-### O365 用户管理 `/api/o365/users`
-
-| 方法 | 端点 | 说明 |
-|------|------|------|
-| GET | `/api/o365/users` | 列出用户 |
-| GET | `/api/o365/users/search?keyword=xxx` | 搜索用户 |
-| GET | `/api/o365/users/{id}` | 获取用户详情 |
-| POST | `/api/o365/users` | 创建用户 |
-| POST | `/api/o365/users/batch` | 批量创建用户 |
-| PATCH | `/api/o365/users/{id}` | 更新用户 |
-| DELETE | `/api/o365/users/{id}` | 删除用户 |
-| POST | `/api/o365/users/{id}/enable` | 启用用户 |
-| POST | `/api/o365/users/{id}/disable` | 禁用用户 |
-
-### 许可证 `/api/o365/licenses`
-
-| 方法 | 端点 | 说明 |
-|------|------|------|
-| GET | `/api/o365/licenses` | 查看所有许可证 |
-
-### 域名管理 `/api/o365/domains`
-
-| 方法 | 端点 | 说明 |
-|------|------|------|
-| GET | `/api/o365/domains` | 列出所有域名 |
-| GET | `/api/o365/domains/{id}` | 获取域名详情 |
-| POST | `/api/o365/domains?domain_name=xxx` | 添加域名 |
-| POST | `/api/o365/domains/{id}/verify` | 验证域名 |
-| DELETE | `/api/o365/domains/{id}` | 删除域名 |
-
-### 角色管理 `/api/o365/roles`
-
-| 方法 | 端点 | 说明 |
-|------|------|------|
-| GET | `/api/o365/roles` | 列出所有目录角色 |
-| GET | `/api/o365/roles/{id}/members` | 查看角色成员 |
-| POST | `/api/o365/roles/assign` | 分配角色 |
-| POST | `/api/o365/roles/revoke` | 撤销角色 |
-| POST | `/api/o365/roles/{user_id}/promote` | 提升为全局管理员 |
-| POST | `/api/o365/roles/{user_id}/demote` | 撤销全局管理员 |
-
-### 报告 `/api/o365/reports`
-
-| 方法 | 端点 | 说明 |
-|------|------|------|
-| GET | `/api/o365/reports/organization` | 组织信息 |
-| GET | `/api/o365/reports/onedrive?period=D7` | OneDrive 使用报告 |
-| GET | `/api/o365/reports/exchange?period=D7` | Exchange 使用报告 |
+#### 视图模式
+- **紧凑视图**: 单行显示租户信息，适合管理大量租户
+- **完整视图**: 卡片式显示，信息更详细
 
 ---
 
@@ -755,15 +606,6 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 如有问题或建议，请通过以下方式联系:
 
 - 提交 [Issue](https://github.com/your-repo/issues)
-- 发送邮件至: your-email@example.com
-
----
-
-**开发完成**: 2025-11-19  
-**版本**: v1.0.0  
-**作者**: Droid AI Assistant
-
----
 
 ## ⭐ Star History
 

@@ -153,6 +153,13 @@ export const tenantApi = {
     api.post<{ message: string; detail?: string }>(`/tenants/${id}/update-secret`, null, { 
       params: { delete_old_secret: deleteOldSecret } 
     }),
+  configurePermissions: (id: number) => 
+    api.post<{ 
+      success: boolean; 
+      permissions_configured: string[]; 
+      consent_url: string; 
+      message: string 
+    }>(`/tenants/${id}/configure-permissions`),
 }
 
 // User APIs

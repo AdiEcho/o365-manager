@@ -259,3 +259,37 @@ async def update_tenant_secret(
             status_code=500,
             detail=f"更新密钥失败: {str(e)}"
         )
+
+
+@router.post("/{tenant_id}/configure-permissions")
+async def configure_tenant_permissions(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    graph_service: GraphAPIService = Depends(get_graph_service)
+):
+    """
+    Configure API permissions for a tenant's application
+    """
+    try:
+        tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        if not tenant:
+            raise HTTPException(status_code=404, detail="租户未找到")
+        
+        # Configure permissions via Graph API
+        result = await graph_service.configure_application_permissions(tenant.client_id)
+        
+        # Generate admin consent URL
+        consent_url = f"https://login.microsoftonline.com/{tenant.tenant_id}/adminconsent"
+        consent_url += f"?client_id={tenant.client_id}"
+        
+        return {
+            "success": result["success"],
+            "permissions_configured": result["permissions_configured"],
+            "consent_url": consent_url,
+            "message": "权限配置成功，请使用管理员账户打开同意链接"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"配置权限失败: {str(e)}"
+        )

@@ -30,6 +30,9 @@ export function Tenants() {
   const [isUpdateSecretOpen, setIsUpdateSecretOpen] = useState(false)
   const [updatingTenant, setUpdatingTenant] = useState<Tenant | null>(null)
   const [deleteOldSecret, setDeleteOldSecret] = useState(false)
+  const [isConfigurePermissionsOpen, setIsConfigurePermissionsOpen] = useState(false)
+  const [configuringTenant, setConfiguringTenant] = useState<Tenant | null>(null)
+  const [consentUrl, setConsentUrl] = useState<string>('')
   const [formData, setFormData] = useState<TenantCreate>({
     tenant_id: '',
     client_id: '',
@@ -129,6 +132,20 @@ export function Tenants() {
     },
   })
 
+  const configurePermissionsMutation = useMutation({
+    mutationFn: (id: number) => tenantApi.configurePermissions(id),
+    onSuccess: (response) => {
+      toast.success(response.data.message)
+      setConsentUrl(response.data.consent_url)
+      // Don't close the dialog, show the consent URL instead
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+      setIsConfigurePermissionsOpen(false)
+      setConfiguringTenant(null)
+    },
+  })
+
   const handleUpdateSecret = (tenant: Tenant) => {
     setUpdatingTenant(tenant)
     setDeleteOldSecret(false)
@@ -139,6 +156,24 @@ export function Tenants() {
     if (updatingTenant) {
       updateSecretMutation.mutate({ id: updatingTenant.id, deleteOld: deleteOldSecret })
     }
+  }
+
+  const handleConfigurePermissions = (tenant: Tenant) => {
+    setConfiguringTenant(tenant)
+    setConsentUrl('')
+    setIsConfigurePermissionsOpen(true)
+  }
+
+  const confirmConfigurePermissions = () => {
+    if (configuringTenant) {
+      configurePermissionsMutation.mutate(configuringTenant.id)
+    }
+  }
+
+  const closePermissionsDialog = () => {
+    setIsConfigurePermissionsOpen(false)
+    setConfiguringTenant(null)
+    setConsentUrl('')
   }
 
   const handleCreate = () => {
@@ -453,6 +488,22 @@ export function Tenants() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                onClick={() => handleConfigurePermissions(tenant)}
+                                disabled={configurePermissionsMutation.isPending}
+                                className="h-7 px-2 text-xs"
+                              >
+                                {configurePermissionsMutation.isPending ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <ShieldCheck className="h-3 w-3 mr-1" />
+                                    配置权限
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => navigate(`/tenants/${tenant.id}/users`)}
                                 className="h-7 px-2 text-xs"
                               >
@@ -645,6 +696,24 @@ export function Tenants() {
                           <>
                             <Key className="h-3 w-3 mr-1" />
                             更新密钥
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConfigurePermissions(tenant)}
+                        disabled={configurePermissionsMutation.isPending}
+                      >
+                        {configurePermissionsMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            配置中...
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                            配置权限
                           </>
                         )}
                       </Button>
@@ -964,6 +1033,129 @@ export function Tenants() {
                 '确认更新'
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Configure Permissions Dialog */}
+      <Dialog open={isConfigurePermissionsOpen} onOpenChange={(open) => {
+        if (!open) closePermissionsDialog()
+      }}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>配置 API 权限</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {!consentUrl ? (
+              <>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    将为租户 <strong>{configuringTenant?.tenant_name || '未命名租户'}</strong> 配置以下 Microsoft Graph API 权限：
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">应用程序权限：</p>
+                  <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
+                    <li><strong>User.Read.All</strong> - 读取所有用户的完整配置文件</li>
+                    <li><strong>Organization.Read.All</strong> - 读取组织信息</li>
+                    <li><strong>Reports.Read.All</strong> - 读取所有使用情况报告</li>
+                    <li><strong>Directory.Read.All</strong> - 读取目录数据</li>
+                  </ul>
+                </div>
+                
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>说明：</strong>
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-blue-700 dark:text-blue-300 list-disc list-inside">
+                    <li>权限配置后需要全局管理员进行授权同意</li>
+                    <li>配置完成后会显示管理员同意链接</li>
+                    <li>请使用全局管理员账户打开链接完成授权</li>
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                    ✅ 权限配置成功！
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    请使用全局管理员账户打开以下链接完成授权：
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                  <p className="text-xs font-mono break-all">{consentUrl}</p>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(consentUrl)
+                      toast.success('已复制到剪贴板')
+                    }}
+                    className="flex-1"
+                  >
+                    复制链接
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => window.open(consentUrl, '_blank')}
+                    className="flex-1"
+                  >
+                    在新标签页打开
+                  </Button>
+                </div>
+                
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>注意：</strong>
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
+                    <li>需要使用此租户的全局管理员账户登录</li>
+                    <li>授权后权限才会生效</li>
+                    <li>关闭此对话框不影响已配置的权限</li>
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            {!consentUrl ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={closePermissionsDialog}
+                >
+                  取消
+                </Button>
+                <Button
+                  onClick={confirmConfigurePermissions}
+                  disabled={configurePermissionsMutation.isPending}
+                >
+                  {configurePermissionsMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      配置中...
+                    </>
+                  ) : (
+                    '确认配置'
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={closePermissionsDialog}
+                className="w-full"
+              >
+                关闭
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

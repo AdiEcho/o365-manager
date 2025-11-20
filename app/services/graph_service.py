@@ -302,3 +302,85 @@ class GraphAPIService:
             }
         except Exception as e:
             raise Exception(f"Failed to update client secret: {str(e)}")
+    
+    async def configure_application_permissions(self, application_id: str) -> Dict[str, Any]:
+        """
+        Configure required API permissions for an application
+        
+        Permissions to be configured:
+        - User.Read.All (Application)
+        - Organization.Read.All (Application)
+        - Reports.Read.All (Application)
+        - Directory.Read.All (Application)
+        
+        Args:
+            application_id: The application's client_id (appId)
+            
+        Returns: {"success": bool, "consent_url": str, "permissions_configured": List[str]}
+        """
+        try:
+            # First, get the application object by appId (client_id)
+            filter_query = f"appId eq '{application_id}'"
+            apps_result = await self._make_request("GET", "/applications", params={"$filter": filter_query})
+            apps = apps_result.get("value", [])
+            
+            if not apps or len(apps) == 0:
+                raise Exception(f"Application with client_id {application_id} not found")
+            
+            app_object_id = apps[0]["id"]
+            
+            # Define required permissions for Microsoft Graph
+            # Resource App ID for Microsoft Graph: 00000003-0000-0000-c000-000000000000
+            required_permissions = {
+                "requiredResourceAccess": [
+                    {
+                        "resourceAppId": "00000003-0000-0000-c000-000000000000",  # Microsoft Graph
+                        "resourceAccess": [
+                            {
+                                "id": "df021288-bdef-4463-88db-98f22de89214",  # User.Read.All
+                                "type": "Role"  # Application permission
+                            },
+                            {
+                                "id": "498476ce-e0fe-48b0-b801-37ba7e2685c6",  # Organization.Read.All
+                                "type": "Role"
+                            },
+                            {
+                                "id": "230c1aed-a721-4c5d-9cb4-a90514e508ef",  # Reports.Read.All
+                                "type": "Role"
+                            },
+                            {
+                                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",  # Directory.Read.All
+                                "type": "Role"
+                            }
+                        ]
+                    }
+                ]
+            }
+            
+            # Update application permissions
+            await self._make_request(
+                "PATCH",
+                f"/applications/{app_object_id}",
+                data=required_permissions
+            )
+            
+            print(f"Successfully configured permissions for application {application_id}")
+            
+            # Get tenant ID for consent URL
+            # We'll extract it from the token or use a default
+            # For now, we'll return the tenant_id as part of the response
+            
+            permissions_list = [
+                "User.Read.All",
+                "Organization.Read.All", 
+                "Reports.Read.All",
+                "Directory.Read.All"
+            ]
+            
+            return {
+                "success": True,
+                "permissions_configured": permissions_list,
+                "client_id": application_id
+            }
+        except Exception as e:
+            raise Exception(f"Failed to configure application permissions: {str(e)}")

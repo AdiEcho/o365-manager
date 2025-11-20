@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { tenantApi } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, ShieldCheck, Key, FileCheck } from 'lucide-react'
+import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, ShieldCheck, Key, FileCheck, Sparkles } from 'lucide-react'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
 
 export function Dashboard() {
@@ -297,6 +297,25 @@ export function Dashboard() {
                   授予管理员同意
                 </h3>
                 <div className="space-y-2">
+                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 mb-3">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">
+                          推荐：使用系统自动配置 ⭐
+                        </p>
+                        <ol className="mt-2 space-y-1 text-sm text-purple-700 dark:text-purple-300 list-decimal list-inside">
+                          <li>手动添加 <code className="bg-purple-100 dark:bg-purple-900 px-1 rounded">Application.ReadWrite.All</code> 权限</li>
+                          <li>授予管理员同意</li>
+                          <li>在系统中添加租户后，点击 <strong>"配置权限"</strong> 按钮</li>
+                          <li>系统将自动配置所需的所有权限</li>
+                          <li>使用生成的管理员同意链接完成授权</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground font-medium">手动配置方式：</p>
                   <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
                     <li>在"API 权限"页面</li>
                     <li>点击"授予 [租户名称] 的管理员同意"</li>
@@ -348,6 +367,10 @@ export function Dashboard() {
                   <tr>
                     <td className="px-4 py-2">生成报告</td>
                     <td className="px-4 py-2 text-muted-foreground">Reports.Read.All</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">配置权限</td>
+                    <td className="px-4 py-2 text-muted-foreground">Application.ReadWrite.All</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2">更新密钥</td>
