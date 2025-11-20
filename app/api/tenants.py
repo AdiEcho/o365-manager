@@ -238,6 +238,7 @@ async def update_tenant_secret(
         )
         new_secret = secret_result["client_secret"]
         end_date = secret_result["end_date"]
+        deletion_summary = secret_result.get("deletion_summary", "")
         
         # 更新租户密钥和过期时间
         tenant.client_secret = new_secret
@@ -248,9 +249,8 @@ async def update_tenant_secret(
         await db.flush()
         await db.refresh(tenant)
         
-        delete_msg = " (已删除旧密钥)" if delete_old_secret else ""
         return MessageResponse(
-            message=f"密钥更新成功{delete_msg}",
+            message=f"密钥更新成功{deletion_summary}",
             detail=f"新密钥已生成，过期时间: {end_date}"
         )
     except Exception as e:
