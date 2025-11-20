@@ -17,8 +17,8 @@ export function Dashboard() {
     },
   })
 
-  const activeTenants = tenants?.items.filter(t => t.is_active).length || 0
-  const inactiveTenants = tenants?.items.filter(t => !t.is_active).length || 0
+  const validCredentialTenants = tenants?.items.filter(t => t.credential_status === 'valid').length || 0
+  const invalidCredentialTenants = tenants?.items.filter(t => t.credential_status === 'invalid').length || 0
 
   const stats = [
     {
@@ -30,16 +30,16 @@ export function Dashboard() {
       loading: tenantsLoading,
     },
     {
-      name: '启用租户',
-      value: activeTenants,
+      name: '有效凭证租户',
+      value: validCredentialTenants,
       icon: CheckCircle2,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
       loading: tenantsLoading,
     },
     {
-      name: '禁用租户',
-      value: inactiveTenants,
+      name: '无效凭证租户',
+      value: invalidCredentialTenants,
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-100',
@@ -124,22 +124,13 @@ export function Dashboard() {
                   onClick={() => navigate('/tenants')}
                 >
                   <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-lg bg-blue-100">
-                          <Building2 className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-base">{tenant.tenant_name || '未命名租户'}</CardTitle>
-                          <div className="text-xs text-muted-foreground mt-1">{tenant.tenant_id}</div>
-                        </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 rounded-lg bg-blue-100">
+                        <Building2 className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        {tenant.is_active ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
-                        )}
+                        <CardTitle className="text-base">{tenant.tenant_name || '未命名租户'}</CardTitle>
+                        <div className="text-xs text-muted-foreground mt-1">{tenant.tenant_id}</div>
                       </div>
                     </div>
                   </CardHeader>

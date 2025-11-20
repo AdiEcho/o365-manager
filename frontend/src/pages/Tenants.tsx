@@ -315,13 +315,6 @@ export function Tenants() {
                                 {tenant.tenant_id}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {tenant.is_active ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <XCircle className="h-4 w-4 text-red-600" />
-                              )}
-                            </div>
                           </div>
 
                           {/* 状态和操作 */}
@@ -522,19 +515,8 @@ export function Tenants() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle>
                           {tenant.tenant_name || '未命名租户'}
-                          {tenant.is_active ? (
-                            <span className="flex items-center text-xs font-normal text-green-600">
-                              <CheckCircle2 className="h-4 w-4 mr-1" />
-                              启用
-                            </span>
-                          ) : (
-                            <span className="flex items-center text-xs font-normal text-red-600">
-                              <XCircle className="h-4 w-4 mr-1" />
-                              禁用
-                            </span>
-                          )}
                         </CardTitle>
                         <CardDescription className="mt-2 space-y-1">
                           <div>租户 ID: {tenant.tenant_id}</div>
