@@ -13,10 +13,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Edit2, Users, Award, Globe, ShieldCheck, FileText, RefreshCw, AlertCircle, Ban, HelpCircle, Key } from 'lucide-react'
+import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Edit2, Users, Award, Globe, ShieldCheck, FileText, RefreshCw, AlertCircle, Ban, HelpCircle, Key, ChevronUp, MoreHorizontal } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { formatDate } from '@/utils/utils'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
+import { Switch } from '@/components/ui/switch'
 
 export function Tenants() {
   const navigate = useNavigate()
@@ -24,6 +25,8 @@ export function Tenants() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null)
+  const [viewMode, setViewMode] = useState<'compact' | 'full'>('full')
+  const [expandedTenants, setExpandedTenants] = useState<Set<number>>(new Set())
   const [formData, setFormData] = useState<TenantCreate>({
     tenant_id: '',
     client_id: '',
@@ -169,6 +172,18 @@ export function Tenants() {
     setEditingTenant(null)
   }
 
+  const toggleTenantExpansion = (tenantId: number) => {
+    setExpandedTenants(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(tenantId)) {
+        newSet.delete(tenantId)
+      } else {
+        newSet.add(tenantId)
+      }
+      return newSet
+    })
+  }
+
   const getCredentialStatusDisplay = (credentialStatus?: string) => {
     switch (credentialStatus) {
       case 'valid':
@@ -245,10 +260,20 @@ export function Tenants() {
             管理多个 Microsoft 365 租户
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          添加租户
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="view-mode" className="text-sm">缩略视图</Label>
+            <Switch
+              id="view-mode"
+              checked={viewMode === 'compact'}
+              onCheckedChange={(checked) => setViewMode(checked ? 'compact' : 'full')}
+            />
+          </div>
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            添加租户
+          </Button>
+        </div>
       </div>
 
       {/* Tenants List */}
@@ -266,8 +291,233 @@ export function Tenants() {
               <p className="text-muted-foreground">暂无租户，请添加第一个租户</p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              {tenants?.items.map((tenant) => (
+            <div className={viewMode === 'compact' ? "grid gap-4" : "grid gap-6 md:grid-cols-2"}>
+              {tenants?.items.map((tenant) => {
+                const isExpanded = expandedTenants.has(tenant.id)
+                
+                if (viewMode === 'compact') {
+                  const credentialDisplay = getCredentialStatusDisplay(tenant.credential_status)
+                  const CredentialIcon = credentialDisplay.icon
+                  const spoDisplay = getSpoStatusDisplay(tenant.spo_status)
+                  const SpoIcon = spoDisplay.icon
+                  
+                  return (
+                    <Card key={tenant.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="pt-6">
+                        <div className="space-y-4">
+                          {/* 基本信息行 */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-lg truncate">
+                                {tenant.tenant_name || '未命名租户'}
+                              </h3>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {tenant.tenant_id}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {tenant.is_active ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <XCircle className="h-4 w-4 text-red-600" />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 状态和操作 */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${credentialDisplay.bgColor} ${credentialDisplay.color}`}>
+                              <CredentialIcon className="h-3 w-3 mr-1" />
+                              {credentialDisplay.text}
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${spoDisplay.bgColor} ${spoDisplay.color}`}>
+                              <SpoIcon className="h-3 w-3 mr-1" />
+                              {spoDisplay.text}
+                            </span>
+                          </div>
+
+                          {/* 操作按钮 */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => validateMutation.mutate(tenant.id)}
+                              disabled={validateMutation.isPending}
+                              className="flex-1"
+                            >
+                              {validateMutation.isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <ShieldCheck className="h-3 w-3 mr-1" />
+                                  验证凭据
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => checkSpoMutation.mutate(tenant.id)}
+                              disabled={checkSpoMutation.isPending}
+                              className="flex-1"
+                            >
+                              {checkSpoMutation.isPending ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <RefreshCw className="h-3 w-3 mr-1" />
+                                  检查 SPO
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleTenantExpansion(tenant.id)}
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="h-4 w-4 mr-1" />
+                                  收起
+                                </>
+                              ) : (
+                                <>
+                                  <MoreHorizontal className="h-4 w-4 mr-1" />
+                                  更多
+                                </>
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* 展开内容 */}
+                          {isExpanded && (
+                            <div className="pt-4 border-t space-y-3">
+                              {/* 详细信息 */}
+                              <div className="text-sm space-y-1 text-muted-foreground">
+                                <div>客户端 ID: {tenant.client_id}</div>
+                                {tenant.remarks && <div>备注: {tenant.remarks}</div>}
+                                <div>创建时间: {formatDate(tenant.created_at)}</div>
+                                {tenant.credential_checked_at && (
+                                  <div>凭据检查: {formatDate(tenant.credential_checked_at)}</div>
+                                )}
+                                {tenant.spo_checked_at && (
+                                  <div>SPO 检查: {formatDate(tenant.spo_checked_at)}</div>
+                                )}
+                              </div>
+
+                              {/* 更多操作按钮 */}
+                              <div className="grid grid-cols-2 gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(tenant)}
+                                >
+                                  <Edit2 className="h-3 w-3 mr-1" />
+                                  编辑
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (confirm('将创建一个过期时间为2099-12-31的新密钥，成功后会替换现有密钥。确定要继续吗？')) {
+                                      updateSecretMutation.mutate(tenant.id)
+                                    }
+                                  }}
+                                  disabled={updateSecretMutation.isPending}
+                                >
+                                  {updateSecretMutation.isPending ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Key className="h-3 w-3 mr-1" />
+                                      更新密钥
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+
+                              {/* 管理功能 */}
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-2">管理功能</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex flex-col h-auto py-2"
+                                    onClick={() => navigate(`/tenants/${tenant.id}/users`)}
+                                  >
+                                    <Users className="h-4 w-4 mb-1" />
+                                    <span className="text-xs">用户</span>
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex flex-col h-auto py-2"
+                                    onClick={() => navigate(`/tenants/${tenant.id}/licenses`)}
+                                  >
+                                    <Award className="h-4 w-4 mb-1" />
+                                    <span className="text-xs">许可证</span>
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex flex-col h-auto py-2"
+                                    onClick={() => navigate(`/tenants/${tenant.id}/domains`)}
+                                  >
+                                    <Globe className="h-4 w-4 mb-1" />
+                                    <span className="text-xs">域名</span>
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex flex-col h-auto py-2"
+                                    onClick={() => navigate(`/tenants/${tenant.id}/roles`)}
+                                  >
+                                    <ShieldCheck className="h-4 w-4 mb-1" />
+                                    <span className="text-xs">角色</span>
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex flex-col h-auto py-2 col-span-2"
+                                    onClick={() => navigate(`/tenants/${tenant.id}/reports`)}
+                                  >
+                                    <FileText className="h-4 w-4 mb-1" />
+                                    <span className="text-xs">报告</span>
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* 许可证摘要 */}
+                              <div className="pt-3 border-t">
+                                <TenantLicensesSummary tenantId={tenant.id} compact />
+                              </div>
+
+                              {/* 删除按钮 */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  if (confirm('确定要删除此租户吗？')) {
+                                    deleteMutation.mutate(tenant.id)
+                                  }
+                                }}
+                                disabled={deleteMutation.isPending}
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                删除租户
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                }
+                
+                // 完整视图（原来的代码）
+                return (
                 <Card key={tenant.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -458,7 +708,8 @@ export function Tenants() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                )
+              })}
             </div>
           )}
         </CardContent>
