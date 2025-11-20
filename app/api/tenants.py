@@ -243,8 +243,9 @@ async def update_tenant_secret(
         # 更新租户密钥和过期时间
         tenant.client_secret = new_secret
         if end_date:
-            from dateutil import parser
-            tenant.client_secret_expires_at = parser.parse(end_date)
+            from datetime import datetime
+            # Parse ISO 8601 datetime string (e.g., "2099-12-31T23:59:59Z")
+            tenant.client_secret_expires_at = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
         
         await db.flush()
         await db.refresh(tenant)
