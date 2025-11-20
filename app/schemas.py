@@ -27,6 +27,7 @@ class TenantResponse(BaseModel):
     id: int
     tenant_id: str
     client_id: str
+    client_secret_expires_at: Optional[datetime] = None
     tenant_name: Optional[str] = None
     remarks: Optional[str] = None
     is_active: bool

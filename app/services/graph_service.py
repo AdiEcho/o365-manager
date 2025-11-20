@@ -198,9 +198,15 @@ class GraphAPIService:
                     "message": f"检查失败: {str(e)}"
                 }
     
-    async def update_client_secret(self, application_id: str) -> Dict[str, Any]:
+    async def update_client_secret(self, application_id: str, delete_old_secret: bool = False) -> Dict[str, Any]:
         """
         Create a new password credential for an application with expiry date of 2099-12-31
+        Optionally delete all old password credentials
+        
+        Args:
+            application_id: The application's client_id (appId)
+            delete_old_secret: If True, delete all existing password credentials before adding new one
+            
         Returns: {"client_secret": str, "key_id": str, "end_date": str}
         """
         try:
@@ -213,6 +219,22 @@ class GraphAPIService:
                 raise Exception(f"Application with client_id {application_id} not found")
             
             app_object_id = apps[0]["id"]
+            existing_credentials = apps[0].get("passwordCredentials", [])
+            
+            # Delete old password credentials if requested
+            if delete_old_secret and existing_credentials:
+                for credential in existing_credentials:
+                    key_id = credential.get("keyId")
+                    if key_id:
+                        try:
+                            await self._make_request(
+                                "POST",
+                                f"/applications/{app_object_id}/removePassword",
+                                data={"keyId": key_id}
+                            )
+                        except Exception as e:
+                            # Continue even if deletion fails
+                            print(f"Warning: Failed to delete old credential {key_id}: {str(e)}")
             
             # Add new password credential with expiry date 2099-12-31
             password_credential = {

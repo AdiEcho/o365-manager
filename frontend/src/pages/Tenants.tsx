@@ -27,6 +27,9 @@ export function Tenants() {
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null)
   const [viewMode, setViewMode] = useState<'compact' | 'full'>('full')
   const [expandedTenants, setExpandedTenants] = useState<Set<number>>(new Set())
+  const [isUpdateSecretOpen, setIsUpdateSecretOpen] = useState(false)
+  const [updatingTenant, setUpdatingTenant] = useState<Tenant | null>(null)
+  const [deleteOldSecret, setDeleteOldSecret] = useState(false)
   const [formData, setFormData] = useState<TenantCreate>({
     tenant_id: '',
     client_id: '',
@@ -111,16 +114,32 @@ export function Tenants() {
   })
 
   const updateSecretMutation = useMutation({
-    mutationFn: (id: number) => tenantApi.updateSecret(id),
+    mutationFn: ({ id, deleteOld }: { id: number; deleteOld: boolean }) => 
+      tenantApi.updateSecret(id, deleteOld),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] })
       const detail = response.data.detail ? ` (${response.data.detail})` : ''
       toast.success(`${response.data.message}${detail}`)
+      setIsUpdateSecretOpen(false)
+      setUpdatingTenant(null)
+      setDeleteOldSecret(false)
     },
     onError: (error: Error) => {
       toast.error(error.message)
     },
   })
+
+  const handleUpdateSecret = (tenant: Tenant) => {
+    setUpdatingTenant(tenant)
+    setDeleteOldSecret(false)
+    setIsUpdateSecretOpen(true)
+  }
+
+  const confirmUpdateSecret = () => {
+    if (updatingTenant) {
+      updateSecretMutation.mutate({ id: updatingTenant.id, deleteOld: deleteOldSecret })
+    }
+  }
 
   const handleCreate = () => {
     if (!formData.tenant_id || !formData.client_id || !formData.client_secret) {
@@ -389,6 +408,11 @@ export function Tenants() {
                             {/* 详细信息 - 两列布局 */}
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
                               <div>客户端 ID: <span className="font-mono text-[10px]">{tenant.client_id}</span></div>
+                              {tenant.client_secret_expires_at && (
+                                <div className={new Date(tenant.client_secret_expires_at) < new Date() ? 'text-red-600' : ''}>
+                                  密钥过期: {formatDate(tenant.client_secret_expires_at)}
+                                </div>
+                              )}
                               {tenant.remarks && <div>备注: {tenant.remarks}</div>}
                               <div>创建: {formatDate(tenant.created_at)}</div>
                               {tenant.credential_checked_at && (
@@ -413,11 +437,7 @@ export function Tenants() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  if (confirm('将创建一个过期时间为2099-12-31的新密钥，成功后会替换现有密钥。确定要继续吗？')) {
-                                    updateSecretMutation.mutate(tenant.id)
-                                  }
-                                }}
+                                onClick={() => handleUpdateSecret(tenant)}
                                 disabled={updateSecretMutation.isPending}
                                 className="h-7 px-2 text-xs"
                               >
@@ -514,6 +534,11 @@ export function Tenants() {
                         <CardDescription className="mt-2 space-y-1">
                           <div>租户 ID: {tenant.tenant_id}</div>
                           <div>客户端 ID: {tenant.client_id}</div>
+                          {tenant.client_secret_expires_at && (
+                            <div className={new Date(tenant.client_secret_expires_at) < new Date() ? 'text-red-600' : ''}>
+                              密钥过期: {formatDate(tenant.client_secret_expires_at)}
+                            </div>
+                          )}
                           {tenant.remarks && <div>备注: {tenant.remarks}</div>}
                           <div>创建时间: {formatDate(tenant.created_at)}</div>
                           <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -608,11 +633,7 @@ export function Tenants() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          if (confirm('将创建一个过期时间为2099-12-31的新密钥，成功后会替换现有密钥。确定要继续吗？')) {
-                            updateSecretMutation.mutate(tenant.id)
-                          }
-                        }}
+                        onClick={() => handleUpdateSecret(tenant)}
                         disabled={updateSecretMutation.isPending}
                       >
                         {updateSecretMutation.isPending ? (
@@ -866,6 +887,81 @@ export function Tenants() {
                 </>
               ) : (
                 '更新'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Secret Dialog */}
+      <Dialog open={isUpdateSecretOpen} onOpenChange={(open) => {
+        setIsUpdateSecretOpen(open)
+        if (!open) {
+          setUpdatingTenant(null)
+          setDeleteOldSecret(false)
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>更新客户端密钥</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                将为租户 <strong>{updatingTenant?.tenant_name || '未命名租户'}</strong> 创建一个新的客户端密钥，过期时间为 <strong>2099-12-31</strong>。
+              </p>
+              {updatingTenant?.client_secret_expires_at && (
+                <div className={`text-sm ${new Date(updatingTenant.client_secret_expires_at) < new Date() ? 'text-red-600' : 'text-muted-foreground'}`}>
+                  当前密钥过期时间: {formatDate(updatingTenant.client_secret_expires_at)}
+                  {new Date(updatingTenant.client_secret_expires_at) < new Date() && ' (已过期)'}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-2 p-3 rounded-lg border bg-slate-50 dark:bg-slate-900">
+              <input
+                type="checkbox"
+                id="delete_old_secret"
+                checked={deleteOldSecret}
+                onChange={(e) => setDeleteOldSecret(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="delete_old_secret" className="text-sm font-medium cursor-pointer">
+                删除所有旧密钥
+              </label>
+            </div>
+            
+            <div className="space-y-2 text-sm">
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-yellow-800 dark:text-yellow-200">
+                  <strong>注意：</strong>
+                </p>
+                <ul className="mt-2 space-y-1 text-yellow-700 dark:text-yellow-300 list-disc list-inside">
+                  <li>新密钥生成后将自动保存到系统</li>
+                  <li>如果勾选"删除所有旧密钥"，所有现有密钥将被删除</li>
+                  <li>请确保在删除前，所有使用旧密钥的服务已更新</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsUpdateSecretOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={confirmUpdateSecret}
+              disabled={updateSecretMutation.isPending}
+            >
+              {updateSecretMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  更新中...
+                </>
+              ) : (
+                '确认更新'
               )}
             </Button>
           </DialogFooter>

@@ -10,6 +10,7 @@ class Tenant(Base):
     tenant_id = Column(String(100), unique=True, nullable=False, index=True)
     client_id = Column(String(100), nullable=False)
     client_secret = Column(String(200), nullable=False)
+    client_secret_expires_at = Column(DateTime(timezone=True))
     tenant_name = Column(String(200))
     remarks = Column(Text)
     is_active = Column(Boolean, default=True)

@@ -207,6 +207,7 @@ async def check_tenant_spo_status(
 @router.post("/{tenant_id}/update-secret", response_model=MessageResponse)
 async def update_tenant_secret(
     tenant_id: int,
+    delete_old_secret: bool = False,
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
@@ -231,16 +232,26 @@ async def update_tenant_secret(
     graph_service = GraphAPIService(msal_service)
     
     try:
-        secret_result = await graph_service.update_client_secret(tenant.client_id)
+        secret_result = await graph_service.update_client_secret(
+            tenant.client_id,
+            delete_old_secret=delete_old_secret
+        )
         new_secret = secret_result["client_secret"]
+        end_date = secret_result["end_date"]
         
+        # 更新租户密钥和过期时间
         tenant.client_secret = new_secret
+        if end_date:
+            from dateutil import parser
+            tenant.client_secret_expires_at = parser.parse(end_date)
+        
         await db.flush()
         await db.refresh(tenant)
         
+        delete_msg = " (已删除旧密钥)" if delete_old_secret else ""
         return MessageResponse(
-            message="密钥更新成功",
-            detail=f"新密钥已生成，过期时间: {secret_result['end_date']}"
+            message=f"密钥更新成功{delete_msg}",
+            detail=f"新密钥已生成，过期时间: {end_date}"
         )
     except Exception as e:
         raise HTTPException(

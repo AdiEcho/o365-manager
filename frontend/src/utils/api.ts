@@ -40,6 +40,7 @@ export interface Tenant {
   id: number
   tenant_id: string
   client_id: string
+  client_secret_expires_at?: string
   tenant_name?: string
   remarks?: string
   is_active: boolean
@@ -148,7 +149,10 @@ export const tenantApi = {
   delete: (id: number) => api.delete(`/tenants/${id}`),
   validate: (id: number) => api.get(`/tenants/${id}/validate`),
   checkSpoStatus: (id: number) => api.get<SpoStatusResponse>(`/tenants/${id}/spo-status`),
-  updateSecret: (id: number) => api.post<{ message: string; detail?: string }>(`/tenants/${id}/update-secret`),
+  updateSecret: (id: number, deleteOldSecret?: boolean) => 
+    api.post<{ message: string; detail?: string }>(`/tenants/${id}/update-secret`, null, { 
+      params: { delete_old_secret: deleteOldSecret } 
+    }),
 }
 
 // User APIs
