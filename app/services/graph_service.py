@@ -213,11 +213,11 @@ class GraphAPIService:
     async def update_client_secret(self, application_id: str, delete_old_secret: bool = False) -> Dict[str, Any]:
         """
         Create a new password credential for an application with expiry date of 2099-12-31
-        Optionally delete all old password credentials
+        Optionally delete the first old password credential (assumed to be the currently used one)
         
         Args:
             application_id: The application's client_id (appId)
-            delete_old_secret: If True, delete all existing password credentials before adding new one
+            delete_old_secret: If True, delete the first existing password credential after adding new one
             
         Returns: {"client_secret": str, "key_id": str, "end_date": str}
         """
@@ -233,50 +233,11 @@ class GraphAPIService:
                 raise Exception(f"Application with client_id {application_id} not found")
             
             app_object_id = apps[0]["id"]
+            
+            # Save the first existing credential's keyId BEFORE creating new one
+            # This is assumed to be the currently used credential
             existing_credentials = apps[0].get("passwordCredentials", [])
-            
-            # Delete old password credentials if requested
-            deleted_count = 0
-            failed_count = 0
-            
-            if delete_old_secret and existing_credentials:
-                for i, credential in enumerate(existing_credentials):
-                    key_id = credential.get("keyId")
-                    if key_id:
-                        # Add delay between deletions to avoid concurrent conflicts
-                        if i > 0:
-                            await asyncio.sleep(0.5)
-                        
-                        # Retry logic for concurrent conflicts
-                        max_retries = 3
-                        for attempt in range(max_retries):
-                            try:
-                                await self._make_request(
-                                    "POST",
-                                    f"/applications/{app_object_id}/removePassword",
-                                    data={"keyId": key_id}
-                                )
-                                deleted_count += 1
-                                print(f"Successfully deleted credential {key_id}")
-                                break
-                            except Exception as e:
-                                error_msg = str(e)
-                                # Check if it's a concurrent conflict error
-                                if "ConcurrencyViolation" in error_msg or "409" in error_msg:
-                                    if attempt < max_retries - 1:
-                                        # Wait and retry
-                                        await asyncio.sleep(1 + attempt)
-                                        print(f"Retrying deletion of credential {key_id} (attempt {attempt + 2}/{max_retries})")
-                                        continue
-                                
-                                # Log failure but continue
-                                print(f"Warning: Failed to delete credential {key_id}: {error_msg}")
-                                failed_count += 1
-                                break
-                
-                # Wait a bit after all deletions before adding new credential
-                if deleted_count > 0:
-                    await asyncio.sleep(1)
+            old_key_to_delete = existing_credentials[0].get("keyId") if existing_credentials else None
             
             # Add new password credential with expiry date 2099-12-31
             password_credential = {
@@ -290,16 +251,48 @@ class GraphAPIService:
                 data={"passwordCredential": password_credential}
             )
             
-            # Prepare result message
+            new_key_id = result.get("keyId")
+            
+            # Delete the old credential if requested (after creating new one)
             deletion_msg = ""
-            if delete_old_secret:
-                if deleted_count > 0:
-                    deletion_msg = f" (已删除 {deleted_count} 个旧密钥"
-                    if failed_count > 0:
-                        deletion_msg += f"，{failed_count} 个删除失败"
-                    deletion_msg += ")"
-                elif failed_count > 0:
-                    deletion_msg = f" (所有 {failed_count} 个旧密钥删除失败)"
+            
+            if delete_old_secret and old_key_to_delete:
+                # Make sure we don't delete the newly created credential
+                if old_key_to_delete != new_key_id:
+                    # Wait a bit to ensure new credential is fully created
+                    await asyncio.sleep(1)
+                    
+                    # Retry logic for concurrent conflicts
+                    max_retries = 3
+
+                    for attempt in range(max_retries):
+                        try:
+                            await self._make_request(
+                                "POST",
+                                f"/applications/{app_object_id}/removePassword",
+                                data={"keyId": old_key_to_delete}
+                            )
+                            print(f"Successfully deleted old credential {old_key_to_delete}")
+                            deletion_msg = " (已删除旧密钥)"
+                            break
+                        except Exception as e:
+                            error_msg = str(e)
+                            # Check if it's a concurrent conflict error
+                            if "ConcurrencyViolation" in error_msg or "409" in error_msg:
+                                if attempt < max_retries - 1:
+                                    # Wait and retry with exponential backoff
+                                    await asyncio.sleep(1 * (attempt + 1))
+                                    print(f"Retrying deletion of credential {old_key_to_delete} (attempt {attempt + 2}/{max_retries})")
+                                    continue
+                            
+                            # Log failure
+                            print(f"Warning: Failed to delete credential {old_key_to_delete}: {error_msg}")
+                            deletion_msg = " (旧密钥删除失败)"
+                            break
+                else:
+                    deletion_msg = " (旧密钥与新密钥相同，跳过删除)"
+            elif delete_old_secret and not old_key_to_delete:
+                deletion_msg = " (无旧密钥需要删除)"
             
             return {
                 "client_secret": result.get("secretText"),
