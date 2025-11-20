@@ -303,31 +303,36 @@ export function Tenants() {
                   
                   return (
                     <Card key={tenant.id} className="hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-l-4" style={{ borderLeftColor: tenant.credential_status === 'valid' ? '#16a34a' : tenant.credential_status === 'invalid' ? '#dc2626' : '#9ca3af' }}>
-                      <CardContent className="p-3">
-                        {/* 紧凑单行布局 */}
-                        <div className="flex items-center gap-3">
-                          {/* 租户名称 - 固定宽度 */}
-                          <div className="w-48 min-w-0 flex-shrink-0">
-                            <h3 className="font-semibold text-sm truncate">
-                              {tenant.tenant_name || '未命名租户'}
-                            </h3>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {tenant.tenant_id}
-                            </p>
-                          </div>
-
-                          {/* 状态图标 - 紧凑显示 */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <div className={`p-1.5 rounded ${credentialDisplay.bgColor}`} title={credentialDisplay.text}>
-                              <CredentialIcon className={`h-3.5 w-3.5 ${credentialDisplay.color}`} />
-                            </div>
-                            <div className={`p-1.5 rounded ${spoDisplay.bgColor}`} title={spoDisplay.text}>
-                              <SpoIcon className={`h-3.5 w-3.5 ${spoDisplay.color}`} />
+                      <CardContent className="py-2 px-3">
+                        {/* 单行紧凑布局 */}
+                        <div className="flex items-center gap-4">
+                          {/* 租户信息 - 名称和ID在同一行 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-sm truncate">
+                                {tenant.tenant_name || '未命名租户'}
+                              </h3>
+                              <span className="text-muted-foreground">·</span>
+                              <p className="text-xs text-muted-foreground font-mono truncate">
+                                {tenant.tenant_id}
+                              </p>
                             </div>
                           </div>
 
-                          {/* 操作按钮 - 紧凑布局 */}
-                          <div className="flex items-center gap-1.5 ml-auto">
+                          {/* 状态显示 - 完整文字 */}
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${credentialDisplay.bgColor} ${credentialDisplay.color}`}>
+                              <CredentialIcon className="h-3 w-3 mr-1" />
+                              {credentialDisplay.text}
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${spoDisplay.bgColor} ${spoDisplay.color}`}>
+                              <SpoIcon className="h-3 w-3 mr-1" />
+                              {spoDisplay.text}
+                            </span>
+                          </div>
+
+                          {/* 操作按钮 */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
                             <Button
                               variant="ghost"
                               size="sm"
