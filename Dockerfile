@@ -3,8 +3,8 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /frontend
 
-COPY frontend/package*.json ./
-RUN npm ci
+COPY frontend/package.json ./
+RUN npm install
 
 COPY frontend/ ./
 RUN npm run build
@@ -15,7 +15,7 @@ FROM astral/uv:python3.12-bookworm-slim
 WORKDIR /app
 
 # 复制依赖文件
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml ./
 
 # 使用uv安装依赖
 RUN uv sync --frozen --no-dev
