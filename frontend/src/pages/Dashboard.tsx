@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { tenantApi } from '@/utils/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Building2, CheckCircle2, XCircle, Loader2, Plus } from 'lucide-react'
+import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, ShieldCheck, Key, FileCheck } from 'lucide-react'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
 
 export function Dashboard() {
@@ -150,6 +150,234 @@ export function Dashboard() {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Azure AD Configuration Guide */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5 text-blue-600" />
+            <CardTitle>Azure AD 应用配置指南</CardTitle>
+          </div>
+          <CardDescription>
+            按照以下步骤配置 Azure AD 应用程序，以便使用本系统管理 Microsoft 365 租户
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Step 1 */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold">
+                1
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-base mb-2 flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  注册应用程序
+                </h3>
+                <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                  <li>登录 <a href="https://portal.azure.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">Azure Portal <ExternalLink className="h-3 w-3" /></a></li>
+                  <li>前往 <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">应用注册 <ExternalLink className="h-3 w-3" /></a></li>
+                  <li>点击"新注册"，填写应用信息（名称: Office 365 Manager，账户类型: 仅此组织目录）</li>
+                  <li>点击"注册"</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold">
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-base mb-2 flex items-center gap-2">
+                  <Info className="h-4 w-4" />
+                  记录应用信息
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  记录以下信息（将在添加租户时使用）：
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-muted-foreground list-disc list-inside">
+                  <li><strong>应用程序（客户端）ID</strong></li>
+                  <li><strong>目录（租户）ID</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold">
+                3
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-base mb-2 flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  创建客户端密钥
+                </h3>
+                <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                  <li>在应用程序页面，点击"证书和密码"</li>
+                  <li>点击"新客户端密码"</li>
+                  <li>填写描述，选择过期时间（建议 24 个月）</li>
+                  <li>点击"添加"</li>
+                  <li><strong className="text-orange-600">立即复制密钥值（之后将无法再查看）</strong></li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold">
+                4
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-base mb-2 flex items-center gap-2">
+                  <FileCheck className="h-4 w-4" />
+                  配置 API 权限
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      在应用程序页面，点击"API 权限" → "添加权限" → "Microsoft Graph" → 选择"应用程序权限"
+                    </p>
+                    <p className="text-sm font-medium mb-2">添加以下权限：</p>
+                  </div>
+                  
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-lg border p-3 bg-slate-50 dark:bg-slate-900">
+                      <h4 className="text-xs font-semibold text-blue-600 mb-2">用户管理</h4>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        <li>• User.ReadWrite.All</li>
+                        <li>• User.ManageIdentities.All</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="rounded-lg border p-3 bg-slate-50 dark:bg-slate-900">
+                      <h4 className="text-xs font-semibold text-blue-600 mb-2">目录和角色</h4>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        <li>• Directory.ReadWrite.All</li>
+                        <li>• RoleManagement.ReadWrite.Directory</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="rounded-lg border p-3 bg-slate-50 dark:bg-slate-900">
+                      <h4 className="text-xs font-semibold text-blue-600 mb-2">域名管理</h4>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        <li>• Domain.ReadWrite.All</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="rounded-lg border p-3 bg-slate-50 dark:bg-slate-900">
+                      <h4 className="text-xs font-semibold text-blue-600 mb-2">报告和组织</h4>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        <li>• Reports.Read.All</li>
+                        <li>• Organization.Read.All</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="rounded-lg border p-3 bg-slate-50 dark:bg-slate-900">
+                      <h4 className="text-xs font-semibold text-blue-600 mb-2">可选权限</h4>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        <li>• Application.ReadWrite.All</li>
+                        <li>• Sites.FullControl.All</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 5 */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 font-semibold">
+                5
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-base mb-2 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4" />
+                  授予管理员同意
+                </h3>
+                <div className="space-y-2">
+                  <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                    <li>在"API 权限"页面</li>
+                    <li>点击"授予 [租户名称] 的管理员同意"</li>
+                    <li>确认授予同意</li>
+                    <li><strong className="text-green-600">确保所有权限状态显示绿色勾号</strong></li>
+                  </ol>
+                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <p className="text-sm text-green-800 dark:text-green-200">
+                      <strong>重要：</strong>必须授予管理员同意，否则应用程序无法访问 Microsoft Graph API
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Permissions Table */}
+          <div className="border-t pt-4">
+            <h3 className="font-semibold text-base mb-3">权限功能对照表</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-900">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-semibold">功能</th>
+                    <th className="px-4 py-2 text-left font-semibold">所需权限</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr>
+                    <td className="px-4 py-2">用户管理（创建/删除/更新）</td>
+                    <td className="px-4 py-2 text-muted-foreground">User.ReadWrite.All, Directory.ReadWrite.All</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">启用/禁用用户</td>
+                    <td className="px-4 py-2 text-muted-foreground">User.ReadWrite.All</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">角色管理（提权/撤权）</td>
+                    <td className="px-4 py-2 text-muted-foreground">RoleManagement.ReadWrite.Directory</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">域名管理</td>
+                    <td className="px-4 py-2 text-muted-foreground">Domain.ReadWrite.All</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">查看许可证</td>
+                    <td className="px-4 py-2 text-muted-foreground">Organization.Read.All</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">生成报告</td>
+                    <td className="px-4 py-2 text-muted-foreground">Reports.Read.All</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">更新密钥</td>
+                    <td className="px-4 py-2 text-muted-foreground">Application.ReadWrite.All</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">检查 SPO 状态</td>
+                    <td className="px-4 py-2 text-muted-foreground">Sites.FullControl.All</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="border-t pt-4">
+            <Button onClick={() => navigate('/tenants')} className="w-full">
+              <Plus className="mr-2 h-4 w-4" />
+              配置完成后，添加租户
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -171,7 +171,7 @@ npm run dev
 ### 步骤 1: 注册应用程序
 
 1. 登录 [Azure Portal](https://portal.azure.com)
-2. 导航到 **Azure Active Directory** > **应用注册**
+2. 前往 **[应用注册](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)**
 3. 点击 **新注册**
 4. 填写应用信息:
    - **名称**: Office 365 Manager
