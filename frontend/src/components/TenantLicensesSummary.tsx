@@ -44,47 +44,47 @@ export function TenantLicensesSummary({ tenantId, compact = false }: TenantLicen
 
   if (compact) {
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[10px]">
           <span className="flex items-center text-muted-foreground">
-            <Award className="h-3 w-3 mr-1" />
-            许可证总数
+            <Award className="h-2.5 w-2.5 mr-1" />
+            许可证
           </span>
           <span className="font-medium">{licenses.length} 种</span>
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">分配情况</span>
+        <div className="flex items-center justify-between text-[10px]">
+          <span className="text-muted-foreground">分配</span>
           <span className="font-medium">
             {totalConsumed}/{totalEnabled} ({usagePercentage}%)
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-1.5">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
           <div
-            className={`h-1.5 rounded-full transition-all ${
+            className={`h-1 rounded-full transition-all ${
               usagePercentage >= 90 ? 'bg-red-500' : usagePercentage >= 70 ? 'bg-yellow-500' : 'bg-green-500'
             }`}
             style={{ width: `${usagePercentage}%` }}
           />
         </div>
-        <div className="pt-2 space-y-1 max-h-32 overflow-y-auto">
-          {licenses.slice(0, 3).map((license) => {
+        <div className="pt-1 space-y-1 max-h-24 overflow-y-auto">
+          {licenses.slice(0, 2).map((license) => {
             const percentage = license.enabled_units > 0 
               ? Math.round((license.consumed_units / license.enabled_units) * 100) 
               : 0
             const licenseName = getLicenseName(license.sku_part_number, license.sku_name_cn)
             return (
-              <div key={license.sku_id} className="text-xs">
+              <div key={license.sku_id} className="text-[10px]">
                 <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-muted-foreground truncate max-w-[240px]" title={licenseName}>
+                  <span className="text-muted-foreground truncate flex-1 mr-1" title={licenseName}>
                     {licenseName}
                   </span>
-                  <span className="text-xs font-mono">
+                  <span className="font-mono shrink-0">
                     {license.consumed_units}/{license.enabled_units}
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-1">
+                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-0.5">
                   <div
-                    className={`h-1 rounded-full ${
+                    className={`h-0.5 rounded-full ${
                       percentage >= 90 ? 'bg-red-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-blue-500'
                     }`}
                     style={{ width: `${percentage}%` }}
@@ -93,9 +93,9 @@ export function TenantLicensesSummary({ tenantId, compact = false }: TenantLicen
               </div>
             )
           })}
-          {licenses.length > 3 && (
-            <div className="text-xs text-muted-foreground text-center pt-1">
-              还有 {licenses.length - 3} 种许可证...
+          {licenses.length > 2 && (
+            <div className="text-[10px] text-muted-foreground text-center pt-0.5">
+              +{licenses.length - 2} 更多
             </div>
           )}
         </div>

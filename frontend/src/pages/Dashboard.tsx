@@ -116,25 +116,25 @@ export function Dashboard() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {tenants?.items.slice(0, 6).map((tenant) => (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {tenants?.items.slice(0, 9).map((tenant) => (
                 <Card
                   key={tenant.id}
                   className="hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => navigate('/tenants')}
                 >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-blue-100">
-                        <Building2 className="h-5 w-5 text-blue-600" />
+                  <CardHeader className="pb-2 pt-3 px-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30">
+                        <Building2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <div>
-                        <CardTitle className="text-base">{tenant.tenant_name || '未命名租户'}</CardTitle>
-                        <div className="text-xs text-muted-foreground mt-1">{tenant.tenant_id}</div>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm truncate">{tenant.tenant_name || '未命名租户'}</CardTitle>
+                        <div className="text-[10px] text-muted-foreground truncate">{tenant.tenant_id}</div>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0">
+                  <CardContent className="pt-0 pb-3 px-3">
                     <TenantLicensesSummary tenantId={tenant.id} compact />
                   </CardContent>
                 </Card>
