@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { tenantApi } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, ShieldCheck, Key, FileCheck, Sparkles } from 'lucide-react'
+import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, Key, FileCheck, Sparkles } from 'lucide-react'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
 
 export function Dashboard() {
