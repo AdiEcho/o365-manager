@@ -285,7 +285,7 @@ export function Dashboard() {
                     </div>
                     
                     <p className="text-xs text-muted-foreground pl-8 mb-3">
-                      适用于不想授予 Application.ReadWrite.All 权限的场景（将无法使用自动更新客户端密钥功能）
+                      适用于不想授予 Application.ReadWrite.All 权限的场景（将无法使用自动配置权限功能）
                     </p>
                     
                     <div className="pl-8 space-y-3">
