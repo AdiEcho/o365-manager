@@ -37,6 +37,11 @@ export function Tenants() {
   const [isConfigurePermissionsOpen, setIsConfigurePermissionsOpen] = useState(false)
   const [configuringTenant, setConfiguringTenant] = useState<Tenant | null>(null)
   const [consentUrl, setConsentUrl] = useState<string>('')
+  const [loadingTenantIds, setLoadingTenantIds] = useState<{
+    validate?: number
+    checkSpo?: number
+    refreshLicenses?: number
+  }>({})
   const [formData, setFormData] = useState<TenantCreate>({
     tenant_id: '',
     client_id: '',
@@ -103,25 +108,35 @@ export function Tenants() {
   })
 
   const validateMutation = useMutation({
-    mutationFn: (id: number) => tenantApi.validate(id),
+    mutationFn: (id: number) => {
+      setLoadingTenantIds(prev => ({ ...prev, validate: id }))
+      return tenantApi.validate(id)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] })
       toast.success('租户凭据验证成功')
+      setLoadingTenantIds(prev => ({ ...prev, validate: undefined }))
     },
     onError: (error: Error) => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] })
       toast.error(error.message)
+      setLoadingTenantIds(prev => ({ ...prev, validate: undefined }))
     },
   })
 
   const checkSpoMutation = useMutation({
-    mutationFn: (id: number) => tenantApi.checkSpoStatus(id),
+    mutationFn: (id: number) => {
+      setLoadingTenantIds(prev => ({ ...prev, checkSpo: id }))
+      return tenantApi.checkSpoStatus(id)
+    },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] })
       toast.success(`SPO 状态检查完成: ${response.data.message}`)
+      setLoadingTenantIds(prev => ({ ...prev, checkSpo: undefined }))
     },
     onError: (error: Error) => {
       toast.error(error.message)
+      setLoadingTenantIds(prev => ({ ...prev, checkSpo: undefined }))
     },
   })
 
@@ -156,12 +171,17 @@ export function Tenants() {
   })
 
   const refreshLicensesMutation = useMutation({
-    mutationFn: (tenantId: number) => licenseApi.listByTenant(tenantId, true),
+    mutationFn: (tenantId: number) => {
+      setLoadingTenantIds(prev => ({ ...prev, refreshLicenses: tenantId }))
+      return licenseApi.listByTenant(tenantId, true)
+    },
     onSuccess: () => {
       toast.success('许可证数据已刷新')
+      setLoadingTenantIds(prev => ({ ...prev, refreshLicenses: undefined }))
     },
     onError: (error: Error) => {
       toast.error(`刷新失败: ${error.message}`)
+      setLoadingTenantIds(prev => ({ ...prev, refreshLicenses: undefined }))
     },
   })
 
@@ -410,11 +430,11 @@ export function Tenants() {
                               variant="ghost"
                               size="sm"
                               onClick={() => validateMutation.mutate(tenant.id)}
-                              disabled={validateMutation.isPending}
+                              disabled={loadingTenantIds.validate === tenant.id}
                               className="h-7 px-2 text-xs"
                               title="验证凭据"
                             >
-                              {validateMutation.isPending ? (
+                              {loadingTenantIds.validate === tenant.id ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <>
@@ -427,11 +447,11 @@ export function Tenants() {
                               variant="ghost"
                               size="sm"
                               onClick={() => checkSpoMutation.mutate(tenant.id)}
-                              disabled={checkSpoMutation.isPending}
+                              disabled={loadingTenantIds.checkSpo === tenant.id}
                               className="h-7 px-2 text-xs"
                               title="检查 SPO"
                             >
-                              {checkSpoMutation.isPending ? (
+                              {loadingTenantIds.checkSpo === tenant.id ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <>
@@ -444,11 +464,11 @@ export function Tenants() {
                               variant="ghost"
                               size="sm"
                               onClick={() => refreshLicensesMutation.mutate(tenant.id)}
-                              disabled={refreshLicensesMutation.isPending}
+                              disabled={loadingTenantIds.refreshLicenses === tenant.id}
                               className="h-7 px-2 text-xs"
                               title="刷新许可证"
                             >
-                              {refreshLicensesMutation.isPending ? (
+                              {loadingTenantIds.refreshLicenses === tenant.id ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <>
@@ -695,7 +715,7 @@ export function Tenants() {
                         variant="outline"
                         size="sm"
                         onClick={() => validateMutation.mutate(tenant.id)}
-                        disabled={validateMutation.isPending}
+                        disabled={loadingTenantIds.validate === tenant.id}
                       >
                         验证凭据
                       </Button>
@@ -703,9 +723,9 @@ export function Tenants() {
                         variant="outline"
                         size="sm"
                         onClick={() => checkSpoMutation.mutate(tenant.id)}
-                        disabled={checkSpoMutation.isPending}
+                        disabled={loadingTenantIds.checkSpo === tenant.id}
                       >
-                        {checkSpoMutation.isPending ? (
+                        {loadingTenantIds.checkSpo === tenant.id ? (
                           <>
                             <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                             检查中...
@@ -721,9 +741,9 @@ export function Tenants() {
                         variant="outline"
                         size="sm"
                         onClick={() => refreshLicensesMutation.mutate(tenant.id)}
-                        disabled={refreshLicensesMutation.isPending}
+                        disabled={loadingTenantIds.refreshLicenses === tenant.id}
                       >
-                        {refreshLicensesMutation.isPending ? (
+                        {loadingTenantIds.refreshLicenses === tenant.id ? (
                           <>
                             <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                             刷新中...
