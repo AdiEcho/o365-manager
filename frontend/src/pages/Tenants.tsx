@@ -243,6 +243,11 @@ export function Tenants() {
       remarks: formData.remarks,
     }
     
+    // Include tenant_id if it has been changed
+    if (formData.tenant_id && formData.tenant_id !== editingTenant.tenant_id) {
+      updateData.tenant_id = formData.tenant_id
+    }
+    
     if (formData.client_id && formData.client_id !== editingTenant.client_id) {
       updateData.client_id = formData.client_id
     }
@@ -959,11 +964,13 @@ export function Tenants() {
               <Label htmlFor="edit_tenant_id">租户 ID</Label>
               <Input
                 id="edit_tenant_id"
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 value={formData.tenant_id}
-                disabled
-                className="bg-gray-100"
+                onChange={(e) =>
+                  setFormData({ ...formData, tenant_id: e.target.value })
+                }
               />
-              <p className="text-xs text-muted-foreground">租户 ID 不可修改</p>
+              <p className="text-xs text-muted-foreground">如果修改，凭据状态将被重置</p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit_tenant_name">租户名称</Label>
@@ -986,6 +993,7 @@ export function Tenants() {
                   setFormData({ ...formData, client_id: e.target.value })
                 }
               />
+              <p className="text-xs text-muted-foreground">如果修改，凭据状态将被重置</p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit_client_secret">客户端密钥</Label>
@@ -998,7 +1006,7 @@ export function Tenants() {
                   setFormData({ ...formData, client_secret: e.target.value })
                 }
               />
-              <p className="text-xs text-muted-foreground">留空表示不修改密钥</p>
+              <p className="text-xs text-muted-foreground">留空表示不修改密钥。如果修改，凭据状态将被重置。</p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit_remarks">备注</Label>

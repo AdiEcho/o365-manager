@@ -94,6 +94,25 @@ async def update_tenant(
     
     update_data = tenant_data.model_dump(exclude_unset=True)
     
+    # Check if tenant_id is being updated and ensure uniqueness
+    if 'tenant_id' in update_data and update_data['tenant_id'] != tenant.tenant_id:
+        existing = await db.execute(
+            select(Tenant).where(Tenant.tenant_id == update_data['tenant_id'])
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(
+                status_code=400,
+                detail="Tenant with this ID already exists"
+            )
+    
+    # If client_secret, client_id, or tenant_id is being updated, reset credential status
+    if ('client_secret' in update_data and update_data['client_secret']) or \
+       ('client_id' in update_data and update_data['client_id'] != tenant.client_id) or \
+       ('tenant_id' in update_data and update_data['tenant_id'] != tenant.tenant_id):
+        tenant.credential_status = None
+        tenant.credential_message = None
+        tenant.credential_checked_at = None
+    
     for field, value in update_data.items():
         setattr(tenant, field, value)
     
