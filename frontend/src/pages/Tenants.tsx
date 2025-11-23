@@ -961,6 +961,17 @@ export function Tenants() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
+            <Label htmlFor="edit_tenant_name">租户名称</Label>
+            <Input
+              id="edit_tenant_name"
+              placeholder="我的组织"
+              value={formData.tenant_name}
+              onChange={(e) =>
+                setFormData({ ...formData, tenant_name: e.target.value })
+              }
+              />
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="edit_tenant_id">租户 ID</Label>
               <Input
                 id="edit_tenant_id"
@@ -971,17 +982,6 @@ export function Tenants() {
                 }
               />
               <p className="text-xs text-muted-foreground">如果修改，凭据状态将被重置</p>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit_tenant_name">租户名称</Label>
-              <Input
-                id="edit_tenant_name"
-                placeholder="我的组织"
-                value={formData.tenant_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, tenant_name: e.target.value })
-                }
-              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit_client_id">客户端 ID</Label>
