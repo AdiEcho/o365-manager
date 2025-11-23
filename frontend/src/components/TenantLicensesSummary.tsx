@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { licenseApi } from '@/utils/api'
 import { getLicenseName, formatLicenseUsage, formatDate } from '@/utils/utils'
-import { Award, Loader2, Clock } from 'lucide-react'
+import { Award, Loader2 } from 'lucide-react'
 
 interface TenantLicensesSummaryProps {
   tenantId: number
@@ -82,21 +82,9 @@ export function TenantLicensesSummary({ tenantId, compact = false }: TenantLicen
                   <span className="text-muted-foreground truncate flex-1 mr-1" title={licenseName}>
                     {licenseName}
                   </span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="font-mono">
-                      {license.consumed_units}/{license.enabled_units}
-                    </span>
-                    {license.expires_at && (
-                      <span 
-                        className={`inline-flex items-center ${
-                          isExpired ? 'text-red-600' : isExpiringSoon ? 'text-yellow-600' : 'text-gray-500'
-                        }`}
-                        title={`过期: ${formatDate(license.expires_at)}`}
-                      >
-                        <Clock className="h-2 w-2" />
-                      </span>
-                    )}
-                  </div>
+                  <span className="font-mono shrink-0">
+                    {license.consumed_units}/{license.enabled_units}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-0.5">
                   <div
@@ -177,21 +165,9 @@ export function TenantLicensesSummary({ tenantId, compact = false }: TenantLicen
                 <span className="font-medium truncate flex-1 mr-2" title={licenseName}>
                   {licenseName}
                 </span>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-muted-foreground font-mono">
-                    {formatLicenseUsage(license.consumed_units, license.enabled_units)}
-                  </span>
-                  {license.expires_at && (
-                    <span 
-                      className={`inline-flex items-center gap-1 text-[10px] ${
-                        isExpired ? 'text-red-600' : isExpiringSoon ? 'text-yellow-600' : 'text-gray-500'
-                      }`}
-                    >
-                      <Clock className="h-3 w-3" />
-                      {isExpired ? '已过期' : formatDate(license.expires_at)}
-                    </span>
-                  )}
-                </div>
+                <span className="text-muted-foreground font-mono shrink-0">
+                  {formatLicenseUsage(license.consumed_units, license.enabled_units)}
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
                 <div
@@ -201,6 +177,13 @@ export function TenantLicensesSummary({ tenantId, compact = false }: TenantLicen
                   style={{ width: `${percentage}%` }}
                 />
               </div>
+              {license.expires_at && (
+                <div className={`text-[10px] ${
+                  isExpired ? 'text-red-600' : isExpiringSoon ? 'text-yellow-600' : 'text-gray-500'
+                }`}>
+                  {isExpired ? '已过期' : '过期'}: {formatDate(license.expires_at)}
+                </div>
+              )}
             </div>
           )
         })}
