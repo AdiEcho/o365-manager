@@ -107,6 +107,33 @@ class GraphAPIService:
         result = await self._make_request("GET", "/subscribedSkus")
         return result.get("value", [])
     
+    async def get_directory_subscriptions(self) -> List[Dict[str, Any]]:
+        """Get directory subscriptions with expiration dates from beta endpoint"""
+        # Note: This uses the beta endpoint which may have different behavior
+        url = f"https://graph.microsoft.com/beta/directory/subscriptions"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.get_headers()) as response:
+                if response.status == 401:
+                    self._token = None
+                    return await self.get_directory_subscriptions()
+                
+                if response.status >= 400:
+                    # Log the error but don't fail - subscriptions endpoint may not be available
+                    try:
+                        error_data = await response.json()
+                        print(f"Warning: Failed to get directory subscriptions: {response.status} - {error_data}")
+                    except Exception:
+                        print(f"Warning: Failed to get directory subscriptions: {response.status}")
+                    return []
+                
+                try:
+                    response_data = await response.json()
+                    return response_data.get("value", [])
+                except Exception as e:
+                    print(f"Warning: Failed to parse directory subscriptions response: {e}")
+                    return []
+    
     async def get_directory_roles(self) -> List[Dict[str, Any]]:
         result = await self._make_request("GET", "/directoryRoles")
         return result.get("value", [])

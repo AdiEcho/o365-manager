@@ -41,21 +41,32 @@ async def list_licenses(
         logger.info("Fetching licenses for default tenant")
         skus = await graph_service.get_subscribed_skus()
         
+        # Fetch directory subscriptions for expiration dates
+        logger.info("Fetching directory subscriptions for expiration dates")
+        subscriptions = await graph_service.get_directory_subscriptions()
+        
+        # Build a map of skuId to expiration date
+        sku_expiration_map = {}
+        for subscription in subscriptions:
+            sku_id = subscription.get("skuId")
+            next_lifecycle = subscription.get("nextLifecycleDateTime")
+            if sku_id and next_lifecycle:
+                try:
+                    sku_expiration_map[sku_id] = datetime.fromisoformat(next_lifecycle.replace('Z', '+00:00'))
+                except Exception as e:
+                    logger.warning(f"Failed to parse nextLifecycleDateTime for subscription {sku_id}: {e}")
+        
         licenses = []
         for sku in skus:
             prepaid_units = sku.get("prepaidUnits", {})
             sku_part_number = sku.get("skuPartNumber")
+            sku_id = sku.get("skuId")
             
-            # 尝试获取过期时间（如果存在）
-            expires_at = None
-            if "nextLifecycleDateTime" in sku and sku["nextLifecycleDateTime"]:
-                try:
-                    expires_at = datetime.fromisoformat(sku["nextLifecycleDateTime"].replace('Z', '+00:00'))
-                except Exception as e:
-                    logger.warning(f"Failed to parse nextLifecycleDateTime for {sku_part_number}: {e}")
+            # Get expiration date from directory subscriptions
+            expires_at = sku_expiration_map.get(sku_id)
             
             licenses.append(O365LicenseResponse(
-                sku_id=sku.get("skuId"),
+                sku_id=sku_id,
                 sku_part_number=sku_part_number,
                 sku_name_cn=get_sku_name_cn(sku_part_number),
                 consumed_units=sku.get("consumedUnits", 0),
@@ -148,6 +159,22 @@ async def list_licenses_by_tenant(
         skus = await graph_service.get_subscribed_skus()
         logger.debug(f"Received {len(skus)} SKUs from Graph API")
         
+        # Fetch directory subscriptions for expiration dates
+        logger.debug(f"Calling directory subscriptions API for tenant {tenant_id}")
+        subscriptions = await graph_service.get_directory_subscriptions()
+        logger.debug(f"Received {len(subscriptions)} subscriptions from Graph API")
+        
+        # Build a map of skuId to expiration date
+        sku_expiration_map = {}
+        for subscription in subscriptions:
+            sub_sku_id = subscription.get("skuId")
+            next_lifecycle = subscription.get("nextLifecycleDateTime")
+            if sub_sku_id and next_lifecycle:
+                try:
+                    sku_expiration_map[sub_sku_id] = datetime.fromisoformat(next_lifecycle.replace('Z', '+00:00'))
+                except Exception as e:
+                    logger.warning(f"Failed to parse nextLifecycleDateTime for subscription {sub_sku_id}: {e}")
+        
         # Clear old cache for this tenant
         await db.execute(
             delete(LicenseCache).where(LicenseCache.tenant_id == tenant_id)
@@ -166,13 +193,8 @@ async def list_licenses_by_tenant(
             available_units = enabled_units - consumed_units
             sku_name_cn = get_sku_name_cn(sku_part_number)
             
-            # 尝试获取过期时间（如果存在）
-            expires_at = None
-            if "nextLifecycleDateTime" in sku and sku["nextLifecycleDateTime"]:
-                try:
-                    expires_at = datetime.fromisoformat(sku["nextLifecycleDateTime"].replace('Z', '+00:00'))
-                except Exception as e:
-                    logger.warning(f"Failed to parse nextLifecycleDateTime for {sku_part_number}: {e}")
+            # Get expiration date from directory subscriptions
+            expires_at = sku_expiration_map.get(sku_id)
             
             # Add to response
             licenses.append(O365LicenseResponse(
