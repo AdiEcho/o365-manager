@@ -175,24 +175,26 @@ export function Users() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
-                        <h3 className="font-semibold">{user.display_name}</h3>
                         {user.account_enabled ? (
                           <span className="flex items-center text-xs text-green-600">
                             <CheckCircle2 className="h-4 w-4 mr-1" />
-                            已启用
+                            可用
                           </span>
                         ) : (
                           <span className="flex items-center text-xs text-red-600">
                             <XCircle className="h-4 w-4 mr-1" />
-                            已禁用
+                            禁用
                           </span>
                         )}
+                        <span className="text-sm">{user.user_principal_name}</span>
+                        <h3 className="font-semibold">{user.display_name}</h3>
                       </div>
                       <div className="mt-1 space-y-1 text-sm text-muted-foreground">
-                        <div>邮箱: {user.user_principal_name}</div>
-                        {user.mail && <div>邮件: {user.mail}</div>}
+                        {user.assigned_licenses && user.assigned_licenses.length > 0 && (
+                          <div>订阅: {user.assigned_licenses.join(', ')}</div>
+                        )}
                         {user.usage_location && (
-                          <div>使用位置: {user.usage_location}</div>
+                          <div>国家/地区: {user.usage_location}</div>
                         )}
                       </div>
                     </div>

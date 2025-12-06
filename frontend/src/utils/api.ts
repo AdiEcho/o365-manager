@@ -77,6 +77,7 @@ export interface User {
   account_enabled: boolean
   usage_location?: string
   created_datetime?: string
+  assigned_licenses?: string[]
 }
 
 export interface UserCreate {

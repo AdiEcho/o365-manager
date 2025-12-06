@@ -1,9 +1,25 @@
 import aiohttp
+import json
+import os
 from typing import List, Dict, Any, Optional
 from app.services.msal_service import MSALService
 from app.config import get_settings
 
 settings = get_settings()
+
+# Load SKU map for license name translation
+_sku_map = None
+
+def get_sku_map() -> Dict[str, str]:
+    global _sku_map
+    if _sku_map is None:
+        sku_map_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "sku_map.json")
+        try:
+            with open(sku_map_path, "r", encoding="utf-8") as f:
+                _sku_map = json.load(f)
+        except Exception:
+            _sku_map = {}
+    return _sku_map
 
 
 class GraphAPIService:
@@ -62,12 +78,43 @@ class GraphAPIService:
                 return response_data
     
     async def get_users(self, filter_query: Optional[str] = None, top: int = 100) -> List[Dict[str, Any]]:
-        params = {"$top": top}
+        params = {
+            "$top": top,
+            "$select": "id,displayName,userPrincipalName,mail,accountEnabled,usageLocation,createdDateTime,assignedLicenses"
+        }
         if filter_query:
             params["$filter"] = filter_query
         
         result = await self._make_request("GET", "/users", params=params)
-        return result.get("value", [])
+        users = result.get("value", [])
+        
+        # Get subscribed SKUs for mapping skuId to skuPartNumber
+        try:
+            skus = await self.get_subscribed_skus()
+            sku_id_to_part_number = {sku["skuId"]: sku["skuPartNumber"] for sku in skus}
+        except Exception:
+            sku_id_to_part_number = {}
+        
+        sku_map = get_sku_map()
+        
+        # Convert assignedLicenses skuId to readable names
+        for user in users:
+            assigned_licenses = user.get("assignedLicenses", [])
+            license_names = []
+            for lic in assigned_licenses:
+                sku_id = lic.get("skuId", "")
+                # First try to get skuPartNumber from subscribed SKUs
+                sku_part_number = sku_id_to_part_number.get(sku_id, "")
+                # Then try to get Chinese name from sku_map
+                if sku_part_number and sku_part_number in sku_map:
+                    license_names.append(sku_map[sku_part_number])
+                elif sku_part_number:
+                    license_names.append(sku_part_number)
+                else:
+                    license_names.append(sku_id)
+            user["assignedLicenses"] = license_names
+        
+        return users
     
     async def get_user(self, user_id: str) -> Dict[str, Any]:
         return await self._make_request("GET", f"/users/{user_id}")
