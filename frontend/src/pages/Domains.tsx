@@ -115,19 +115,19 @@ export function Domains() {
                 <div
                   key={domain.id}
                   className={`p-4 border rounded-lg transition-colors ${
-                    domain.is_default ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
+                    domain.isDefault ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <h3 className="font-semibold text-lg">{domain.id}</h3>
-                        {domain.is_default && (
+                        {domain.isDefault && (
                           <span className="px-2 py-1 text-xs font-medium bg-primary text-white rounded">
                             默认域名
                           </span>
                         )}
-                        {domain.is_verified ? (
+                        {domain.isVerified ? (
                           <span className="flex items-center text-xs text-green-600">
                             <CheckCircle2 className="h-4 w-4 mr-1" />
                             已验证
@@ -140,17 +140,17 @@ export function Domains() {
                         )}
                       </div>
                       <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-                        <div>认证类型: {domain.authentication_type}</div>
-                        {domain.supported_services.length > 0 && (
+                        <div>认证类型: {domain.authenticationType}</div>
+                        {domain.supportedServices.length > 0 && (
                           <div>
                             支持的服务:{' '}
-                            {domain.supported_services.join(', ')}
+                            {domain.supportedServices.join(', ')}
                           </div>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {!domain.is_verified && (
+                      {!domain.isVerified && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -161,7 +161,7 @@ export function Domains() {
                           验证
                         </Button>
                       )}
-                      {!domain.is_default && (
+                      {!domain.isDefault && (
                         <Button
                           variant="destructive"
                           size="sm"

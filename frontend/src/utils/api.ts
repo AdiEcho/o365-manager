@@ -71,13 +71,13 @@ export interface TenantCreate {
 
 export interface User {
   id: string
-  display_name: string
-  user_principal_name: string
+  displayName: string
+  userPrincipalName: string
   mail?: string
-  account_enabled: boolean
-  usage_location?: string
-  created_datetime?: string
-  assigned_licenses?: string[]
+  accountEnabled: boolean
+  usageLocation?: string
+  createdDateTime?: string
+  assignedLicenses?: string[]
 }
 
 export interface UserCreate {
@@ -101,10 +101,10 @@ export interface License {
 
 export interface Domain {
   id: string
-  authentication_type: string
-  is_default: boolean
-  is_verified: boolean
-  supported_services: string[]
+  authenticationType: string
+  isDefault: boolean
+  isVerified: boolean
+  supportedServices: string[]
 }
 
 export interface AuthUser {

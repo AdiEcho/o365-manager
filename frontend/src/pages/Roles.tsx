@@ -228,7 +228,7 @@ export function Roles() {
                   onClick={() => {
                     if (
                       confirm(
-                        `确定要提升 ${user.display_name} 为全局管理员吗？`
+                        `确定要提升 ${user.displayName} 为全局管理员吗？`
                       )
                     ) {
                       promoteMutation.mutate(user.id)
@@ -237,9 +237,9 @@ export function Roles() {
                   disabled={promoteMutation.isPending}
                   className="w-full text-left p-3 border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                  <div className="font-medium">{user.display_name}</div>
+                  <div className="font-medium">{user.displayName}</div>
                   <div className="text-sm text-muted-foreground">
-                    {user.user_principal_name}
+                    {user.userPrincipalName}
                   </div>
                 </button>
               ))}

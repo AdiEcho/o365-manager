@@ -175,7 +175,7 @@ export function Users() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
-                        {user.account_enabled ? (
+                        {user.accountEnabled ? (
                           <span className="flex items-center text-xs text-green-600">
                             <CheckCircle2 className="h-4 w-4 mr-1" />
                             可用
@@ -186,20 +186,20 @@ export function Users() {
                             禁用
                           </span>
                         )}
-                        <span className="text-sm">{user.user_principal_name}</span>
-                        <h3 className="font-semibold">{user.display_name}</h3>
-                      </div>
-                      <div className="mt-1 space-y-1 text-sm text-muted-foreground">
-                        {user.assigned_licenses && user.assigned_licenses.length > 0 && (
-                          <div>订阅: {user.assigned_licenses.join(', ')}</div>
-                        )}
-                        {user.usage_location && (
-                          <div>国家/地区: {user.usage_location}</div>
+                        <span className="text-sm text-muted-foreground">{user.userPrincipalName || '-'}</span>
+                        <h3 className="font-semibold">{user.displayName || '-'}</h3>
+                        {user.usageLocation && (
+                          <span className="text-xs text-muted-foreground">({user.usageLocation})</span>
                         )}
                       </div>
+                      {user.assignedLicenses && user.assignedLicenses.length > 0 && (
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          订阅: {user.assignedLicenses.join(', ')}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2">
-                      {user.account_enabled ? (
+                      {user.accountEnabled ? (
                         <Button
                           variant="outline"
                           size="sm"
@@ -222,7 +222,7 @@ export function Users() {
                         variant="destructive"
                         size="sm"
                         onClick={() => {
-                          if (confirm(`确定要删除用户 ${user.display_name} 吗？`)) {
+                          if (confirm(`确定要删除用户 ${user.displayName} 吗？`)) {
                             deleteMutation.mutate(user.id)
                           }
                         }}
