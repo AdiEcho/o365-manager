@@ -141,7 +141,7 @@ export function Domains() {
                       </div>
                       <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                         <div>认证类型: {domain.authenticationType}</div>
-                        {domain.supportedServices.length > 0 && (
+                        {domain.supportedServices && domain.supportedServices.length > 0 && (
                           <div>
                             支持的服务:{' '}
                             {domain.supportedServices.join(', ')}
