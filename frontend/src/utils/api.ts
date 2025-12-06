@@ -166,7 +166,11 @@ export const tenantApi = {
 // User APIs
 export const userApi = {
   list: (params?: { top?: number }) => api.get<User[]>('/o365/users', { params }),
+  listByTenant: (tenantId: number, params?: { top?: number }) => 
+    api.get<User[]>(`/o365/users/tenant/${tenantId}`, { params }),
   search: (keyword: string) => api.get<User[]>('/o365/users/search', { params: { keyword } }),
+  searchByTenant: (tenantId: number, keyword: string) => 
+    api.get<User[]>(`/o365/users/tenant/${tenantId}/search`, { params: { keyword } }),
   get: (id: string) => api.get<User>(`/o365/users/${id}`),
   create: (data: UserCreate) => api.post<User>('/o365/users', data),
   batchCreate: (data: UserCreate[]) => api.post<any[]>('/o365/users/batch', data),
@@ -186,6 +190,7 @@ export const licenseApi = {
 // Domain APIs
 export const domainApi = {
   list: () => api.get<Domain[]>('/o365/domains'),
+  listByTenant: (tenantId: number) => api.get<Domain[]>(`/o365/domains/tenant/${tenantId}`),
   get: (id: string) => api.get<Domain>(`/o365/domains/${id}`),
   create: (domainName: string) => api.post<Domain>('/o365/domains', null, { params: { domain_name: domainName } }),
   verify: (id: string) => api.post<Domain>(`/o365/domains/${id}/verify`),
@@ -195,7 +200,10 @@ export const domainApi = {
 // Role APIs
 export const roleApi = {
   list: () => api.get<any[]>('/o365/roles'),
+  listByTenant: (tenantId: number) => api.get<any[]>(`/o365/roles/tenant/${tenantId}`),
   listMembers: (roleId: string) => api.get<any[]>(`/o365/roles/${roleId}/members`),
+  listMembersByTenant: (tenantId: number, roleId: string) => 
+    api.get<any[]>(`/o365/roles/tenant/${tenantId}/${roleId}/members`),
   assign: (userId: string, roleId: string) => 
     api.post('/o365/roles/assign', { user_id: userId, role_id: roleId }),
   revoke: (userId: string, roleId: string) => 
@@ -207,6 +215,8 @@ export const roleApi = {
 // Report APIs
 export const reportApi = {
   getOrganization: () => api.get<any>('/o365/reports/organization'),
+  getOrganizationByTenant: (tenantId: number) => 
+    api.get<any>(`/o365/reports/tenant/${tenantId}/organization`),
   getOneDrive: (period = 'D7') => 
     api.get('/o365/reports/onedrive', { params: { period }, responseType: 'blob' }),
   getExchange: (period = 'D7') => 

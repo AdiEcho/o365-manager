@@ -1228,44 +1228,60 @@ export function Tenants() {
                 
                 <div className="flex gap-2">
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
-                    onClick={async () => {
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      
                       if (!consentUrl) {
                         toast.error('授权链接为空')
                         return
                       }
                       
+                      // 使用传统的复制方法，更可靠
+                      const textArea = document.createElement('textarea')
+                      textArea.value = consentUrl
+                      textArea.style.position = 'fixed'
+                      textArea.style.left = '-999999px'
+                      textArea.style.top = '-999999px'
+                      textArea.style.opacity = '0'
+                      document.body.appendChild(textArea)
+                      
                       try {
+                        textArea.focus()
+                        textArea.select()
+                        
+                        // 尝试使用现代 API
                         if (navigator.clipboard && window.isSecureContext) {
-                          await navigator.clipboard.writeText(consentUrl)
-                          toast.success('已复制到剪贴板')
-                        } else {
-                          // 回退方案：使用传统的复制方法
-                          const textArea = document.createElement('textarea')
-                          textArea.value = consentUrl
-                          textArea.style.position = 'fixed'
-                          textArea.style.left = '-999999px'
-                          textArea.style.top = '0'
-                          document.body.appendChild(textArea)
-                          textArea.focus()
-                          textArea.select()
-                          try {
-                            const successful = document.execCommand('copy')
-                            if (successful) {
+                          navigator.clipboard.writeText(consentUrl)
+                            .then(() => {
                               toast.success('已复制到剪贴板')
-                            } else {
-                              toast.error('复制失败，请手动复制链接')
-                            }
-                          } catch (err) {
-                            console.error('复制失败:', err)
+                            })
+                            .catch(() => {
+                              // 现代 API 失败，尝试传统方法
+                              const successful = document.execCommand('copy')
+                              if (successful) {
+                                toast.success('已复制到剪贴板')
+                              } else {
+                                toast.error('复制失败，请手动复制链接')
+                              }
+                            })
+                        } else {
+                          // 直接使用传统方法
+                          const successful = document.execCommand('copy')
+                          if (successful) {
+                            toast.success('已复制到剪贴板')
+                          } else {
                             toast.error('复制失败，请手动复制链接')
                           }
-                          document.body.removeChild(textArea)
                         }
                       } catch (err) {
                         console.error('复制失败:', err)
                         toast.error('复制失败，请手动复制链接')
+                      } finally {
+                        document.body.removeChild(textArea)
                       }
                     }}
                     className="flex-1"
@@ -1274,9 +1290,14 @@ export function Tenants() {
                     复制链接
                   </Button>
                   <Button
+                    type="button"
                     variant="default"
                     size="sm"
-                    onClick={() => window.open(consentUrl, '_blank')}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      window.open(consentUrl, '_blank')
+                    }}
                     className="flex-1"
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />

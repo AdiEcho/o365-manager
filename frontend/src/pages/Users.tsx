@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { userApi, type UserCreate } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +17,7 @@ import { Plus, Trash2, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-rea
 import toast from 'react-hot-toast'
 
 export function Users() {
+  const { tenantId } = useParams<{ tenantId: string }>()
   const queryClient = useQueryClient()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [searchKeyword, setSearchKeyword] = useState('')
@@ -28,9 +30,19 @@ export function Users() {
     account_enabled: true,
   })
 
+  const tenantIdNum = tenantId ? parseInt(tenantId, 10) : undefined
+
   const { data: users, isLoading } = useQuery({
-    queryKey: ['users', searchKeyword],
+    queryKey: ['users', tenantIdNum, searchKeyword],
     queryFn: async () => {
+      if (tenantIdNum) {
+        if (searchKeyword) {
+          const res = await userApi.searchByTenant(tenantIdNum, searchKeyword)
+          return res.data
+        }
+        const res = await userApi.listByTenant(tenantIdNum, { top: 100 })
+        return res.data
+      }
       if (searchKeyword) {
         const res = await userApi.search(searchKeyword)
         return res.data

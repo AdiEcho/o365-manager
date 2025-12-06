@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db
 from app.services.graph_service import GraphAPIService
-from app.api.o365_users import get_graph_service
+from app.api.o365_users import get_graph_service, get_graph_service_by_id
 
 router = APIRouter(prefix="/api/o365/reports", tags=["O365 Reports"])
 
@@ -12,6 +14,21 @@ async def get_organization_info(
     try:
         org = await graph_service.get_organization()
         return org
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tenant/{tenant_id}/organization")
+async def get_organization_info_by_tenant(
+    tenant_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        graph_service = await get_graph_service_by_id(tenant_id, db)
+        org = await graph_service.get_organization()
+        return org
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

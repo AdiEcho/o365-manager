@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { roleApi, userApi } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,30 +17,45 @@ import toast from 'react-hot-toast'
 const GLOBAL_ADMIN_ROLE_ID = '62e90394-69f5-4237-9190-012177145e10'
 
 export function Roles() {
+  const { tenantId } = useParams<{ tenantId: string }>()
   const queryClient = useQueryClient()
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [isPromoteOpen, setIsPromoteOpen] = useState(false)
 
+  const tenantIdNum = tenantId ? parseInt(tenantId, 10) : undefined
+
   const { data: roles, isLoading: rolesLoading } = useQuery({
-    queryKey: ['roles'],
+    queryKey: ['roles', tenantIdNum],
     queryFn: async () => {
+      if (tenantIdNum) {
+        const res = await roleApi.listByTenant(tenantIdNum)
+        return res.data
+      }
       const res = await roleApi.list()
       return res.data
     },
   })
 
   const { data: users } = useQuery({
-    queryKey: ['users-for-roles'],
+    queryKey: ['users-for-roles', tenantIdNum],
     queryFn: async () => {
+      if (tenantIdNum) {
+        const res = await userApi.listByTenant(tenantIdNum, { top: 100 })
+        return res.data
+      }
       const res = await userApi.list({ top: 100 })
       return res.data
     },
   })
 
   const { data: roleMembers, isLoading: membersLoading } = useQuery({
-    queryKey: ['roleMembers', selectedRole],
+    queryKey: ['roleMembers', tenantIdNum, selectedRole],
     queryFn: async () => {
       if (!selectedRole) return []
+      if (tenantIdNum) {
+        const res = await roleApi.listMembersByTenant(tenantIdNum, selectedRole)
+        return res.data
+      }
       const res = await roleApi.listMembers(selectedRole)
       return res.data
     },

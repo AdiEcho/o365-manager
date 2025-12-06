@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from app.database import get_db
 from app.schemas import O365DomainResponse, MessageResponse
 from app.services.graph_service import GraphAPIService
-from app.api.o365_users import get_graph_service
+from app.api.o365_users import get_graph_service, get_graph_service_by_id
 
 router = APIRouter(prefix="/api/o365/domains", tags=["O365 Domains"])
 
@@ -14,6 +16,21 @@ async def list_domains(
     try:
         domains = await graph_service.get_domains()
         return [O365DomainResponse(**domain) for domain in domains]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tenant/{tenant_id}", response_model=List[O365DomainResponse])
+async def list_domains_by_tenant(
+    tenant_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        graph_service = await get_graph_service_by_id(tenant_id, db)
+        domains = await graph_service.get_domains()
+        return [O365DomainResponse(**domain) for domain in domains]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

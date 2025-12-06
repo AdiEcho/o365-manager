@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from app.database import get_db
 from app.schemas import O365RoleAssignment, MessageResponse
 from app.services.graph_service import GraphAPIService
-from app.api.o365_users import get_graph_service
+from app.api.o365_users import get_graph_service, get_graph_service_by_id
 
 router = APIRouter(prefix="/api/o365/roles", tags=["O365 Roles"])
 
@@ -20,6 +22,21 @@ async def list_directory_roles(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/tenant/{tenant_id}")
+async def list_directory_roles_by_tenant(
+    tenant_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        graph_service = await get_graph_service_by_id(tenant_id, db)
+        roles = await graph_service.get_directory_roles()
+        return roles
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{role_id}/members")
 async def list_role_members(
     role_id: str,
@@ -28,6 +45,22 @@ async def list_role_members(
     try:
         members = await graph_service.get_directory_role_members(role_id)
         return members
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tenant/{tenant_id}/{role_id}/members")
+async def list_role_members_by_tenant(
+    tenant_id: int,
+    role_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        graph_service = await get_graph_service_by_id(tenant_id, db)
+        members = await graph_service.get_directory_role_members(role_id)
+        return members
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

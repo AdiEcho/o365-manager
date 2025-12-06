@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { reportApi } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,12 +8,19 @@ import { FileText, Download, Loader2, Building2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export function Reports() {
+  const { tenantId } = useParams<{ tenantId: string }>()
   const [period, setPeriod] = useState('D7')
 
+  const tenantIdNum = tenantId ? parseInt(tenantId, 10) : undefined
+
   const { data: organization, isLoading: orgLoading } = useQuery({
-    queryKey: ['organization'],
+    queryKey: ['organization', tenantIdNum],
     queryFn: async () => {
       try {
+        if (tenantIdNum) {
+          const res = await reportApi.getOrganizationByTenant(tenantIdNum)
+          return res.data
+        }
         const res = await reportApi.getOrganization()
         return res.data
       } catch {

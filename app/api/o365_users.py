@@ -76,6 +76,23 @@ async def list_users(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/tenant/{tenant_id}", response_model=List[O365UserResponse])
+async def list_users_by_tenant(
+    tenant_id: int,
+    top: int = 100,
+    filter_query: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        graph_service = await get_graph_service_by_id(tenant_id, db)
+        users = await graph_service.get_users(filter_query=filter_query, top=top)
+        return [O365UserResponse(**user) for user in users]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/search", response_model=List[O365UserResponse])
 async def search_users(
     keyword: str,
@@ -84,6 +101,22 @@ async def search_users(
     try:
         users = await graph_service.search_users(keyword)
         return [O365UserResponse(**user) for user in users]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tenant/{tenant_id}/search", response_model=List[O365UserResponse])
+async def search_users_by_tenant(
+    tenant_id: int,
+    keyword: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        graph_service = await get_graph_service_by_id(tenant_id, db)
+        users = await graph_service.search_users(keyword)
+        return [O365UserResponse(**user) for user in users]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

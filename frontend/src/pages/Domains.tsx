@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { domainApi } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,13 +17,20 @@ import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Shield } from 'lucide-rea
 import toast from 'react-hot-toast'
 
 export function Domains() {
+  const { tenantId } = useParams<{ tenantId: string }>()
   const queryClient = useQueryClient()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [domainName, setDomainName] = useState('')
 
+  const tenantIdNum = tenantId ? parseInt(tenantId, 10) : undefined
+
   const { data: domains, isLoading } = useQuery({
-    queryKey: ['domains'],
+    queryKey: ['domains', tenantIdNum],
     queryFn: async () => {
+      if (tenantIdNum) {
+        const res = await domainApi.listByTenant(tenantIdNum)
+        return res.data
+      }
       const res = await domainApi.list()
       return res.data
     },
