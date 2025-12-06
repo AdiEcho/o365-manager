@@ -93,7 +93,7 @@ class O365UserResponse(BaseModel):
     display_name: str = Field(..., alias="displayName")
     user_principal_name: str = Field(..., alias="userPrincipalName")
     mail: Optional[str] = None
-    account_enabled: bool = Field(..., alias="accountEnabled")
+    account_enabled: Optional[bool] = Field(None, alias="accountEnabled")
     usage_location: Optional[str] = Field(None, alias="usageLocation")
     created_datetime: Optional[str] = Field(None, alias="createdDateTime")
     
