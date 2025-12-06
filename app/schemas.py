@@ -90,20 +90,26 @@ class O365UserUpdate(BaseModel):
 
 class O365UserResponse(BaseModel):
     id: str
-    display_name: str
-    user_principal_name: str
+    display_name: str = Field(..., alias="displayName")
+    user_principal_name: str = Field(..., alias="userPrincipalName")
     mail: Optional[str] = None
-    account_enabled: bool
-    usage_location: Optional[str] = None
-    created_datetime: Optional[str] = None
+    account_enabled: bool = Field(..., alias="accountEnabled")
+    usage_location: Optional[str] = Field(None, alias="usageLocation")
+    created_datetime: Optional[str] = Field(None, alias="createdDateTime")
+    
+    class Config:
+        populate_by_name = True
 
 
 class O365DomainResponse(BaseModel):
     id: str
-    authentication_type: str
-    is_default: bool
-    is_verified: bool
-    supported_services: list[str]
+    authentication_type: str = Field(..., alias="authenticationType")
+    is_default: bool = Field(..., alias="isDefault")
+    is_verified: bool = Field(..., alias="isVerified")
+    supported_services: list[str] = Field(..., alias="supportedServices")
+    
+    class Config:
+        populate_by_name = True
 
 
 class O365LicenseResponse(BaseModel):
