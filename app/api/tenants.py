@@ -1,16 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from typing import List
 from datetime import datetime
 from app.database import get_db
-from app.models import Tenant
+from app.models import Tenant, User
 from app.schemas import (
-    TenantCreate, TenantUpdate, TenantResponse, 
+    TenantCreate, TenantUpdate, TenantResponse,
     TenantListResponse, MessageResponse, SpoStatusResponse
 )
 from app.services.msal_service import MSALService
 from app.services.graph_service import GraphAPIService
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/tenants", tags=["Tenants"])
 
@@ -19,15 +20,16 @@ router = APIRouter(prefix="/api/tenants", tags=["Tenants"])
 async def list_tenants(
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(
         select(Tenant).offset(skip).limit(limit).order_by(Tenant.created_at.desc())
     )
     tenants = result.scalars().all()
     
-    count_result = await db.execute(select(Tenant))
-    total = len(count_result.scalars().all())
+    count_result = await db.execute(select(func.count(Tenant.id)))
+    total = count_result.scalar() or 0
     
     return TenantListResponse(
         total=total,
@@ -38,21 +40,23 @@ async def list_tenants(
 @router.get("/{tenant_id}", response_model=TenantResponse)
 async def get_tenant(
     tenant_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
-    
+
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
-    
+
     return TenantResponse.model_validate(tenant)
 
 
 @router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     tenant_data: TenantCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(
         select(Tenant).where(Tenant.tenant_id == tenant_data.tenant_id)
@@ -84,7 +88,8 @@ async def create_tenant(
 async def update_tenant(
     tenant_id: int,
     tenant_data: TenantUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
@@ -125,11 +130,12 @@ async def update_tenant(
 @router.delete("/{tenant_id}", response_model=MessageResponse)
 async def delete_tenant(
     tenant_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
-    
+
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
     
@@ -141,7 +147,8 @@ async def delete_tenant(
 @router.get("/{tenant_id}/validate", response_model=MessageResponse)
 async def validate_tenant(
     tenant_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
@@ -184,7 +191,8 @@ async def validate_tenant(
 @router.get("/{tenant_id}/spo-status", response_model=SpoStatusResponse)
 async def check_tenant_spo_status(
     tenant_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
@@ -227,7 +235,8 @@ async def check_tenant_spo_status(
 async def update_tenant_secret(
     tenant_id: int,
     delete_old_secret: bool = False,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
@@ -283,7 +292,8 @@ async def update_tenant_secret(
 @router.post("/{tenant_id}/configure-permissions")
 async def configure_tenant_permissions(
     tenant_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Configure API permissions for a tenant's application

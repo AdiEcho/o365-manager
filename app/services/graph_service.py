@@ -42,10 +42,11 @@ class GraphAPIService:
         method: str,
         endpoint: str,
         data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None
+        params: Optional[Dict[str, Any]] = None,
+        _retry_count: int = 0
     ) -> Dict[str, Any]:
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.request(
                 method=method,
@@ -54,9 +55,9 @@ class GraphAPIService:
                 json=data,
                 params=params
             ) as response:
-                if response.status == 401:
+                if response.status == 401 and _retry_count < 1:
                     self._token = None
-                    return await self._make_request(method, endpoint, data, params)
+                    return await self._make_request(method, endpoint, data, params, _retry_count=_retry_count + 1)
                 
                 # Handle 204 No Content (successful deletion)
                 if response.status == 204:

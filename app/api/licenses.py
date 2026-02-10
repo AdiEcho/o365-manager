@@ -5,12 +5,13 @@ from typing import List
 import json
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.database import get_db
 from app.schemas import O365LicenseResponse
 from app.services.graph_service import GraphAPIService
 from app.api.o365_users import get_graph_service, get_graph_service_by_id
-from app.models import LicenseCache
+from app.models import LicenseCache, User
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/o365/licenses", tags=["O365 Licenses"])
 logger = logging.getLogger(__name__)
@@ -35,7 +36,8 @@ def get_sku_name_cn(sku_part_number: str) -> str:
 
 @router.get("", response_model=List[O365LicenseResponse])
 async def list_licenses(
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         logger.info("Fetching licenses for default tenant")
@@ -110,7 +112,8 @@ async def list_licenses(
 async def list_licenses_by_tenant(
     tenant_id: int,
     refresh: bool = Query(False, description="Force refresh from Microsoft Graph API"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Get licenses for a specific tenant by ID
     
@@ -125,7 +128,7 @@ async def list_licenses_by_tenant(
         # Check if we should use cache
         if not refresh:
             # Try to get from cache
-            cache_expiry = datetime.utcnow() - timedelta(hours=CACHE_EXPIRY_HOURS)
+            cache_expiry = datetime.now(timezone.utc) - timedelta(hours=CACHE_EXPIRY_HOURS)
             result = await db.execute(
                 select(LicenseCache)
                 .where(LicenseCache.tenant_id == tenant_id)
@@ -182,7 +185,7 @@ async def list_licenses_by_tenant(
         
         # Build licenses and save to cache
         licenses = []
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         
         for sku in skus:
             prepaid_units = sku.get("prepaidUnits", {})

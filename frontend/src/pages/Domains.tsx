@@ -15,12 +15,16 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { EmptyState } from '@/components/EmptyState'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 export function Domains() {
   const { tenantId } = useParams<{ tenantId: string }>()
   const queryClient = useQueryClient()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [domainName, setDomainName] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; domain: { id: string } | null }>({ open: false, domain: null })
 
   const tenantIdNum = tenantId ? parseInt(tenantId, 10) : undefined
 
@@ -102,20 +106,16 @@ export function Domains() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
+            <LoadingSpinner />
           ) : domains?.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">暂无域名，请添加第一个域名</p>
-            </div>
+            <EmptyState message="暂无域名，请添加第一个域名" />
           ) : (
             <div className="space-y-3">
               {domains?.map((domain) => (
                 <div
                   key={domain.id}
                   className={`p-4 border rounded-lg transition-colors ${
-                    domain.isDefault ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
+                    domain.isDefault ? 'border-primary bg-primary/5' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -165,15 +165,7 @@ export function Domains() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `确定要删除域名 ${domain.id} 吗？\n\n注意: 删除可能需要最多24小时完成。`
-                              )
-                            ) {
-                              deleteMutation.mutate(domain.id)
-                            }
-                          }}
+                          onClick={() => setDeleteConfirm({ open: true, domain })}
                           disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -225,6 +217,17 @@ export function Domains() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ open, domain: open ? deleteConfirm.domain : null })}
+        title="删除域名"
+        description={`确定要删除域名「${deleteConfirm.domain?.id || ''}」吗？删除可能需要最多24小时完成。`}
+        confirmLabel="删除"
+        variant="destructive"
+        onConfirm={() => deleteConfirm.domain && deleteMutation.mutate(deleteConfirm.domain.id)}
+      />
     </div>
   )
 }

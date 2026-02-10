@@ -1,14 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { tenantApi } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, Key, FileCheck, Sparkles } from 'lucide-react'
+import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, Key, FileCheck, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
 
 export function Dashboard() {
   const navigate = useNavigate()
-  
+  const [guideCollapsed, setGuideCollapsed] = useState(() => {
+    const saved = localStorage.getItem('dashboardGuideCollapsed')
+    return saved === 'true'
+  })
+
   const { data: tenants, isLoading: tenantsLoading } = useQuery({
     queryKey: ['tenants'],
     queryFn: async () => {
@@ -19,6 +24,19 @@ export function Dashboard() {
 
   const validCredentialTenants = tenants?.items.filter(t => t.credential_status === 'valid').length || 0
   const invalidCredentialTenants = tenants?.items.filter(t => t.credential_status === 'invalid').length || 0
+
+  // Auto-collapse guide if tenants exist and user hasn't explicitly toggled
+  useEffect(() => {
+    if (!tenantsLoading && tenants && tenants.total > 0 && localStorage.getItem('dashboardGuideCollapsed') === null) {
+      setGuideCollapsed(true)
+    }
+  }, [tenantsLoading, tenants])
+
+  const toggleGuide = () => {
+    const newVal = !guideCollapsed
+    setGuideCollapsed(newVal)
+    localStorage.setItem('dashboardGuideCollapsed', String(newVal))
+  }
 
   const stats = [
     {
@@ -146,15 +164,21 @@ export function Dashboard() {
 
       {/* Azure AD Configuration Guide */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-blue-600" />
-            <CardTitle>Azure AD 应用配置指南</CardTitle>
+        <CardHeader className="cursor-pointer" onClick={toggleGuide}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-blue-600" />
+              <CardTitle>Azure AD 应用配置指南</CardTitle>
+            </div>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {guideCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </Button>
           </div>
           <CardDescription>
             按照以下步骤配置 Azure AD 应用程序，以便使用本系统管理 Microsoft 365 租户
           </CardDescription>
         </CardHeader>
+        {!guideCollapsed && (
         <CardContent className="space-y-6">
           {/* Step 1 */}
           <div className="space-y-3">
@@ -408,6 +432,7 @@ export function Dashboard() {
             </Button>
           </div>
         </CardContent>
+        )}
       </Card>
     </div>
   )

@@ -3,12 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 from app.database import get_db
-from app.models import Tenant
+from app.models import Tenant, User as AppUser
 from app.schemas import (
     O365UserCreate, O365UserUpdate, O365UserResponse, MessageResponse
 )
 from app.services.msal_service import MSALService
 from app.services.graph_service import GraphAPIService
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/o365/users", tags=["O365 Users"])
 
@@ -67,7 +68,8 @@ async def get_graph_service(db: AsyncSession = Depends(get_db)) -> GraphAPIServi
 async def list_users(
     top: int = 100,
     filter_query: Optional[str] = None,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         users = await graph_service.get_users(filter_query=filter_query, top=top)
@@ -81,7 +83,8 @@ async def list_users_by_tenant(
     tenant_id: int,
     top: int = 100,
     filter_query: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         graph_service = await get_graph_service_by_id(tenant_id, db)
@@ -96,7 +99,8 @@ async def list_users_by_tenant(
 @router.get("/search", response_model=List[O365UserResponse])
 async def search_users(
     keyword: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         users = await graph_service.search_users(keyword)
@@ -109,7 +113,8 @@ async def search_users(
 async def search_users_by_tenant(
     tenant_id: int,
     keyword: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         graph_service = await get_graph_service_by_id(tenant_id, db)
@@ -124,7 +129,8 @@ async def search_users_by_tenant(
 @router.get("/{user_id}", response_model=O365UserResponse)
 async def get_user(
     user_id: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         user = await graph_service.get_user(user_id)
@@ -136,7 +142,8 @@ async def get_user(
 @router.post("", response_model=O365UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: O365UserCreate,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         user_payload = {
@@ -160,7 +167,8 @@ async def create_user(
 @router.post("/batch", response_model=List[dict])
 async def batch_create_users(
     users_data: List[O365UserCreate],
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         users_payload = []
@@ -187,7 +195,8 @@ async def batch_create_users(
 async def update_user(
     user_id: str,
     user_data: O365UserUpdate,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         update_payload = user_data.model_dump(exclude_unset=True)
@@ -200,7 +209,8 @@ async def update_user(
 @router.delete("/{user_id}", response_model=MessageResponse)
 async def delete_user(
     user_id: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         await graph_service.delete_user(user_id)
@@ -212,7 +222,8 @@ async def delete_user(
 @router.post("/{user_id}/enable", response_model=O365UserResponse)
 async def enable_user(
     user_id: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         user = await graph_service.enable_user(user_id)
@@ -224,7 +235,8 @@ async def enable_user(
 @router.post("/{user_id}/disable", response_model=O365UserResponse)
 async def disable_user(
     user_id: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: AppUser = Depends(get_current_user)
 ):
     try:
         user = await graph_service.disable_user(user_id)

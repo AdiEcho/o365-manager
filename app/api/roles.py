@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.database import get_db
+from app.models import User
 from app.schemas import O365RoleAssignment, MessageResponse
 from app.services.graph_service import GraphAPIService
 from app.api.o365_users import get_graph_service, get_graph_service_by_id
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/o365/roles", tags=["O365 Roles"])
 
@@ -13,7 +15,8 @@ GLOBAL_ADMIN_ROLE_ID = "62e90394-69f5-4237-9190-012177145e10"
 
 @router.get("")
 async def list_directory_roles(
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         roles = await graph_service.get_directory_roles()
@@ -25,7 +28,8 @@ async def list_directory_roles(
 @router.get("/tenant/{tenant_id}")
 async def list_directory_roles_by_tenant(
     tenant_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         graph_service = await get_graph_service_by_id(tenant_id, db)
@@ -40,7 +44,8 @@ async def list_directory_roles_by_tenant(
 @router.get("/{role_id}/members")
 async def list_role_members(
     role_id: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         members = await graph_service.get_directory_role_members(role_id)
@@ -53,7 +58,8 @@ async def list_role_members(
 async def list_role_members_by_tenant(
     tenant_id: int,
     role_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         graph_service = await get_graph_service_by_id(tenant_id, db)
@@ -68,7 +74,8 @@ async def list_role_members_by_tenant(
 @router.post("/assign", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 async def assign_role(
     role_assignment: O365RoleAssignment,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         await graph_service.add_directory_role_member(
@@ -83,7 +90,8 @@ async def assign_role(
 @router.post("/revoke", response_model=MessageResponse)
 async def revoke_role(
     role_assignment: O365RoleAssignment,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         await graph_service.remove_directory_role_member(
@@ -98,7 +106,8 @@ async def revoke_role(
 @router.post("/{user_id}/promote", response_model=MessageResponse)
 async def promote_to_global_admin(
     user_id: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         await graph_service.add_directory_role_member(
@@ -113,7 +122,8 @@ async def promote_to_global_admin(
 @router.post("/{user_id}/demote", response_model=MessageResponse)
 async def demote_from_global_admin(
     user_id: str,
-    graph_service: GraphAPIService = Depends(get_graph_service)
+    graph_service: GraphAPIService = Depends(get_graph_service),
+    current_user: User = Depends(get_current_user)
 ):
     try:
         await graph_service.remove_directory_role_member(

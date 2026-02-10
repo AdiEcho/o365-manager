@@ -16,6 +16,7 @@ import { cn } from '@/utils/utils'
 import { useAuthStore } from '@/store/auth'
 import { useThemeStore } from '@/store/theme'
 import toast from 'react-hot-toast'
+import { Breadcrumb } from '@/components/Breadcrumb'
 
 const navigation = [
   { name: '仪表板', href: '/dashboard', icon: LayoutDashboard },
@@ -75,7 +76,7 @@ export function Layout() {
         <nav className="mt-6 px-3">
           {navigation.map((item) => {
             const Icon = item.icon
-            const isActive = location.pathname === item.href
+            const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/')
             return (
               <Link
                 key={item.name}
@@ -110,7 +111,7 @@ export function Layout() {
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1 items-center">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {navigation.find(item => item.href === location.pathname)?.name || ''}
+                {navigation.find(item => location.pathname === item.href || location.pathname.startsWith(item.href + '/'))?.name || ''}
               </h2>
             </div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
@@ -179,6 +180,7 @@ export function Layout() {
         {/* Page content */}
         <main className="py-6">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <Breadcrumb />
             <Outlet />
           </div>
         </main>

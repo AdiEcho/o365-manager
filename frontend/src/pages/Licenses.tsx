@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Award, Loader2, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { EmptyState } from '@/components/EmptyState'
 
 export function Licenses() {
   const { tenantId } = useParams<{ tenantId: string }>()
@@ -117,13 +119,9 @@ export function Licenses() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
+            <LoadingSpinner />
           ) : licenses?.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">暂无许可证信息</p>
-            </div>
+            <EmptyState message="暂无许可证信息" />
           ) : (
             <div className="space-y-6">
               {licenses?.map((license) => {
@@ -153,7 +151,7 @@ export function Licenses() {
                         <span>使用率</span>
                         <span className="font-medium">{usagePercent.toFixed(1)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                         <div
                           className={`h-3 rounded-full transition-all ${
                             usagePercent >= 90
@@ -167,12 +165,12 @@ export function Licenses() {
                       </div>
                     </div>
                     {license.available_units <= 5 && license.available_units > 0 && (
-                      <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+                      <div className="text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
                         ⚠️ 警告: 可用许可证不足 ({license.available_units} 个)
                       </div>
                     )}
                     {license.available_units === 0 && (
-                      <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                      <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
                         ❌ 错误: 许可证已用尽
                       </div>
                     )}

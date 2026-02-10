@@ -11,8 +11,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { ShieldCheck, Loader2, Users, ArrowUp, ArrowDown } from 'lucide-react'
+import { ShieldCheck, Users, ArrowUp, ArrowDown } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { EmptyState } from '@/components/EmptyState'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 const GLOBAL_ADMIN_ROLE_ID = '62e90394-69f5-4237-9190-012177145e10'
 
@@ -21,6 +24,8 @@ export function Roles() {
   const queryClient = useQueryClient()
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [isPromoteOpen, setIsPromoteOpen] = useState(false)
+  const [demoteConfirm, setDemoteConfirm] = useState<{ open: boolean; member: { id: string; displayName: string } | null }>({ open: false, member: null })
+  const [promoteConfirm, setPromoteConfirm] = useState<{ open: boolean; user: { id: string; displayName: string } | null }>({ open: false, user: null })
 
   const tenantIdNum = tenantId ? parseInt(tenantId, 10) : undefined
 
@@ -103,13 +108,9 @@ export function Roles() {
           </CardHeader>
           <CardContent>
             {rolesLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
+              <LoadingSpinner />
             ) : roles?.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">暂无角色信息</p>
-              </div>
+              <EmptyState message="暂无角色信息" />
             ) : (
               <div className="space-y-2">
                 {roles?.map((role) => (
@@ -119,7 +120,7 @@ export function Roles() {
                     className={`w-full text-left p-3 rounded-lg border transition-colors ${
                       selectedRole === role.id
                         ? 'border-primary bg-primary/5'
-                        : 'hover:bg-gray-50'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -161,19 +162,15 @@ export function Roles() {
           <CardContent>
             {!selectedRole ? (
               <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
                 <p className="text-muted-foreground">
                   请从左侧选择一个角色查看成员
                 </p>
               </div>
             ) : membersLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              </div>
+              <LoadingSpinner />
             ) : roleMembers?.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">此角色暂无成员</p>
-              </div>
+              <EmptyState message="此角色暂无成员" />
             ) : (
               <div className="space-y-2">
                 {roleMembers?.map((member) => (
@@ -191,15 +188,7 @@ export function Roles() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `确定要撤销 ${member.displayName} 的全局管理员权限吗？`
-                            )
-                          ) {
-                            demoteMutation.mutate(member.id)
-                          }
-                        }}
+                        onClick={() => setDemoteConfirm({ open: true, member })}
                         disabled={demoteMutation.isPending}
                       >
                         <ArrowDown className="h-4 w-4 mr-1" />
@@ -225,17 +214,9 @@ export function Roles() {
               {users?.map((user) => (
                 <button
                   key={user.id}
-                  onClick={() => {
-                    if (
-                      confirm(
-                        `确定要提升 ${user.displayName} 为全局管理员吗？`
-                      )
-                    ) {
-                      promoteMutation.mutate(user.id)
-                    }
-                  }}
+                  onClick={() => setPromoteConfirm({ open: true, user })}
                   disabled={promoteMutation.isPending}
-                  className="w-full text-left p-3 border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="w-full text-left p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
                   <div className="font-medium">{user.displayName}</div>
                   <div className="text-sm text-muted-foreground">
@@ -252,6 +233,27 @@ export function Roles() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Demote Confirmation */}
+      <ConfirmDialog
+        open={demoteConfirm.open}
+        onOpenChange={(open) => setDemoteConfirm({ open, member: open ? demoteConfirm.member : null })}
+        title="撤销全局管理员"
+        description={`确定要撤销「${demoteConfirm.member?.displayName || ''}」的全局管理员权限吗？`}
+        confirmLabel="撤销"
+        variant="destructive"
+        onConfirm={() => demoteConfirm.member && demoteMutation.mutate(demoteConfirm.member.id)}
+      />
+
+      {/* Promote Confirmation */}
+      <ConfirmDialog
+        open={promoteConfirm.open}
+        onOpenChange={(open) => setPromoteConfirm({ open, user: open ? promoteConfirm.user : null })}
+        title="提升为全局管理员"
+        description={`确定要提升「${promoteConfirm.user?.displayName || ''}」为全局管理员吗？`}
+        confirmLabel="确认提升"
+        onConfirm={() => { promoteConfirm.user && promoteMutation.mutate(promoteConfirm.user.id); setIsPromoteOpen(false) }}
+      />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Download, Loader2, Building2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 
 export function Reports() {
   const { tenantId } = useParams<{ tenantId: string }>()
@@ -94,9 +95,7 @@ export function Reports() {
         </CardHeader>
         <CardContent>
           {orgLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
+            <LoadingSpinner className="py-8" />
           ) : organization ? (
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -224,17 +223,17 @@ export function Reports() {
       </div>
 
       {/* Note */}
-      <Card className="border-yellow-200 bg-yellow-50">
+      <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20">
         <CardContent className="pt-6">
           <div className="flex">
             <div className="flex-shrink-0">
-              <FileText className="h-5 w-5 text-yellow-600" />
+              <FileText className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                 关于报告中的用户信息
               </h3>
-              <div className="mt-2 text-sm text-yellow-700">
+              <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                 <p>
                   由于 Microsoft 的隐私策略更新，报告中的用户信息和 URL 可能会以匿名形式显示。
                   如需查看真实信息，请使用管理员账号登录{' '}

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { userApi, type UserCreate } from '@/utils/api'
+import { userApi, type UserCreate, type User as O365User } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,12 +15,18 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Trash2, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { EmptyState } from '@/components/EmptyState'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 
 export function Users() {
   const { tenantId } = useParams<{ tenantId: string }>()
   const queryClient = useQueryClient()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [searchKeyword, setSearchKeyword] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; user: O365User | null }>({ open: false, user: null })
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const [formData, setFormData] = useState<UserCreate>({
     display_name: '',
     user_principal_name: '',
@@ -32,19 +38,26 @@ export function Users() {
 
   const tenantIdNum = tenantId ? parseInt(tenantId, 10) : undefined
 
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['users', tenantIdNum, searchKeyword],
+  useEffect(() => {
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(searchKeyword)
+    }, 300)
+    return () => clearTimeout(searchTimerRef.current)
+  }, [searchKeyword])
+
+  const { data: users, isLoading, isFetching } = useQuery({
+    queryKey: ['users', tenantIdNum, debouncedSearch],
     queryFn: async () => {
       if (tenantIdNum) {
-        if (searchKeyword) {
-          const res = await userApi.searchByTenant(tenantIdNum, searchKeyword)
+        if (debouncedSearch) {
+          const res = await userApi.searchByTenant(tenantIdNum, debouncedSearch)
           return res.data
         }
         const res = await userApi.listByTenant(tenantIdNum, { top: 100 })
         return res.data
       }
-      if (searchKeyword) {
-        const res = await userApi.search(searchKeyword)
+      if (debouncedSearch) {
+        const res = await userApi.search(debouncedSearch)
         return res.data
       }
       const res = await userApi.list({ top: 100 })
@@ -145,6 +158,9 @@ export function Users() {
               onChange={(e) => setSearchKeyword(e.target.value)}
               className="max-w-md"
             />
+            {(isFetching && debouncedSearch !== searchKeyword) && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -156,32 +172,26 @@ export function Users() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
+            <LoadingSpinner />
           ) : users?.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                {searchKeyword ? '未找到匹配的用户' : '暂无用户，请创建第一个用户'}
-              </p>
-            </div>
+            <EmptyState message={debouncedSearch ? '未找到匹配的用户' : '暂无用户，请创建第一个用户'} />
           ) : (
             <div className="space-y-3">
               {users?.map((user) => (
                 <div
                   key={user.id}
-                  className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         {user.accountEnabled ? (
-                          <span className="flex items-center text-xs text-green-600">
+                          <span className="flex items-center text-xs text-green-600 dark:text-green-400">
                             <CheckCircle2 className="h-4 w-4 mr-1" />
                             可用
                           </span>
                         ) : (
-                          <span className="flex items-center text-xs text-red-600">
+                          <span className="flex items-center text-xs text-red-600 dark:text-red-400">
                             <XCircle className="h-4 w-4 mr-1" />
                             禁用
                           </span>
@@ -221,11 +231,7 @@ export function Users() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          if (confirm(`确定要删除用户 ${user.displayName} 吗？`)) {
-                            deleteMutation.mutate(user.id)
-                          }
-                        }}
+                        onClick={() => setDeleteConfirm({ open: true, user })}
                         disabled={deleteMutation.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -323,6 +329,17 @@ export function Users() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ open, user: open ? deleteConfirm.user : null })}
+        title="删除用户"
+        description={`确定要删除用户「${deleteConfirm.user?.displayName || ''}」吗？此操作不可撤销。`}
+        confirmLabel="删除"
+        variant="destructive"
+        onConfirm={() => deleteConfirm.user && deleteMutation.mutate(deleteConfirm.user.id)}
+      />
     </div>
   )
 }
