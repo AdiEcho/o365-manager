@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { ShieldCheck, Users, ArrowUp, ArrowDown } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { PageHeader } from '@/components/PageHeader'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -92,13 +93,10 @@ export function Roles() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">角色管理</h2>
-        <p className="text-muted-foreground mt-2">
-          管理用户的目录角色和权限
-        </p>
-      </div>
+      <PageHeader
+        title="角色管理"
+        subtitle="管理用户的目录角色和权限"
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Roles List */}
@@ -110,7 +108,7 @@ export function Roles() {
             {rolesLoading ? (
               <LoadingSpinner />
             ) : roles?.length === 0 ? (
-              <EmptyState message="暂无角色信息" />
+              <EmptyState message="暂无角色信息" icon={ShieldCheck} />
             ) : (
               <div className="space-y-2">
                 {roles?.map((role) => (

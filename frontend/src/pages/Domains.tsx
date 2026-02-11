@@ -13,8 +13,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Shield } from 'lucide-react'
+import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Shield, Globe } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { PageHeader } from '@/components/PageHeader'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -85,19 +86,16 @@ export function Domains() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">域名管理</h2>
-          <p className="text-muted-foreground mt-2">
-            管理 Office 365 自定义域名
-          </p>
-        </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          添加域名
-        </Button>
-      </div>
+      <PageHeader
+        title="域名管理"
+        subtitle="管理 Office 365 自定义域名"
+        actions={
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            添加域名
+          </Button>
+        }
+      />
 
       {/* Domains List */}
       <Card>
@@ -108,7 +106,7 @@ export function Domains() {
           {isLoading ? (
             <LoadingSpinner />
           ) : domains?.length === 0 ? (
-            <EmptyState message="暂无域名，请添加第一个域名" />
+            <EmptyState message="暂无域名，请添加第一个域名" icon={Globe} />
           ) : (
             <div className="space-y-3">
               {domains?.map((domain) => (

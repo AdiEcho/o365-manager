@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, Key, FileCheck, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
+import { PageHeader } from '@/components/PageHeader'
 
 export function Dashboard() {
   const navigate = useNavigate()
@@ -68,20 +69,18 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">仪表板</h2>
-          <p className="text-muted-foreground mt-2">
-            管理和监控所有 Microsoft 365 租户
-          </p>
-        </div>
-        {tenants?.total === 0 && (
-          <Button onClick={() => navigate('/tenants')}>
-            <Plus className="mr-2 h-4 w-4" />
-            添加租户
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="仪表板"
+        subtitle="管理和监控所有 Microsoft 365 租户"
+        actions={
+          tenants?.total === 0 ? (
+            <Button onClick={() => navigate('/tenants')}>
+              <Plus className="mr-2 h-4 w-4" />
+              添加租户
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-3">

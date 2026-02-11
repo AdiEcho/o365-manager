@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import get_db
 from app.models import Tenant, User
 from app.schemas import (
@@ -163,8 +163,8 @@ async def validate_tenant(
     )
     
     validation_result = await msal_service.validate_credentials()
-    checked_at = datetime.now()
-    
+    checked_at = datetime.now(timezone.utc)
+
     if not validation_result["valid"]:
         tenant.credential_status = "invalid"
         tenant.credential_message = "凭据无效"
@@ -216,7 +216,7 @@ async def check_tenant_spo_status(
     graph_service = GraphAPIService(msal_service)
     spo_result = await graph_service.check_spo_status()
     
-    checked_at = datetime.now()
+    checked_at = datetime.now(timezone.utc)
     tenant.spo_status = spo_result["status"]
     tenant.spo_message = spo_result["message"]
     tenant.spo_checked_at = checked_at

@@ -27,7 +27,7 @@ export function Register() {
         email: formData.email,
         password: formData.password,
       })
-      setAuth(registerRes.data.access_token, null as any)
+      setAuth(registerRes.data.access_token, null)
       const userRes = await authApi.getCurrentUser()
       return { token: registerRes.data.access_token, user: userRes.data }
     },
@@ -68,7 +68,7 @@ export function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-3 text-center">
           <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center">

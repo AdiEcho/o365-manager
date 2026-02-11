@@ -9,7 +9,7 @@ settings = get_settings()
 
 engine = create_async_engine(
     settings.database_url,
-    echo=True,
+    echo=settings.db_echo,
     future=True
 )
 

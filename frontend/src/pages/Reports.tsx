@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { FileText, Download, Loader2, Building2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { PageHeader } from '@/components/PageHeader'
+import { downloadBlob } from '@/utils/download'
 
 export function Reports() {
   const { tenantId } = useParams<{ tenantId: string }>()
@@ -33,15 +35,7 @@ export function Reports() {
   const downloadOneDriveMutation = useMutation({
     mutationFn: (period: string) => reportApi.getOneDrive(period),
     onSuccess: (response) => {
-      const blob = response.data
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `onedrive_usage_${period}_${Date.now()}.csv`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      downloadBlob(response.data, `onedrive_usage_${period}_${Date.now()}.csv`)
       toast.success('OneDrive 报告下载成功')
     },
     onError: (error: Error) => {
@@ -52,15 +46,7 @@ export function Reports() {
   const downloadExchangeMutation = useMutation({
     mutationFn: (period: string) => reportApi.getExchange(period),
     onSuccess: (response) => {
-      const blob = response.data
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `exchange_usage_${period}_${Date.now()}.csv`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      downloadBlob(response.data, `exchange_usage_${period}_${Date.now()}.csv`)
       toast.success('Exchange 报告下载成功')
     },
     onError: (error: Error) => {
@@ -77,13 +63,10 @@ export function Reports() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">报告中心</h2>
-        <p className="text-muted-foreground mt-2">
-          生成和下载 Office 365 使用报告
-        </p>
-      </div>
+      <PageHeader
+        title="报告中心"
+        subtitle="生成和下载 Office 365 使用报告"
+      />
 
       {/* Organization Info */}
       <Card>

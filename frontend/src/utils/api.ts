@@ -142,6 +142,31 @@ export interface ChangePasswordRequest {
   new_password: string
 }
 
+export interface DirectoryRole {
+  id: string
+  displayName: string
+  description?: string
+}
+
+export interface RoleMember {
+  id: string
+  displayName: string
+  userPrincipalName: string
+}
+
+export interface Organization {
+  displayName: string
+  tenantType?: string
+  city?: string
+  country?: string
+}
+
+export interface BatchCreateResult {
+  success: boolean
+  data?: User
+  error?: string
+}
+
 // Tenant APIs
 export const tenantApi = {
   list: () => api.get<{ total: number; items: Tenant[] }>('/tenants'),
@@ -174,7 +199,7 @@ export const userApi = {
     api.get<User[]>(`/o365/users/tenant/${tenantId}/search`, { params: { keyword } }),
   get: (id: string) => api.get<User>(`/o365/users/${id}`),
   create: (data: UserCreate) => api.post<User>('/o365/users', data),
-  batchCreate: (data: UserCreate[]) => api.post<any[]>('/o365/users/batch', data),
+  batchCreate: (data: UserCreate[]) => api.post<BatchCreateResult[]>('/o365/users/batch', data),
   update: (id: string, data: Partial<User>) => api.patch<User>(`/o365/users/${id}`, data),
   delete: (id: string) => api.delete(`/o365/users/${id}`),
   enable: (id: string) => api.post<User>(`/o365/users/${id}/enable`),
@@ -200,11 +225,11 @@ export const domainApi = {
 
 // Role APIs
 export const roleApi = {
-  list: () => api.get<any[]>('/o365/roles'),
-  listByTenant: (tenantId: number) => api.get<any[]>(`/o365/roles/tenant/${tenantId}`),
-  listMembers: (roleId: string) => api.get<any[]>(`/o365/roles/${roleId}/members`),
-  listMembersByTenant: (tenantId: number, roleId: string) => 
-    api.get<any[]>(`/o365/roles/tenant/${tenantId}/${roleId}/members`),
+  list: () => api.get<DirectoryRole[]>('/o365/roles'),
+  listByTenant: (tenantId: number) => api.get<DirectoryRole[]>(`/o365/roles/tenant/${tenantId}`),
+  listMembers: (roleId: string) => api.get<RoleMember[]>(`/o365/roles/${roleId}/members`),
+  listMembersByTenant: (tenantId: number, roleId: string) =>
+    api.get<RoleMember[]>(`/o365/roles/tenant/${tenantId}/${roleId}/members`),
   assign: (userId: string, roleId: string) => 
     api.post('/o365/roles/assign', { user_id: userId, role_id: roleId }),
   revoke: (userId: string, roleId: string) => 
@@ -215,9 +240,9 @@ export const roleApi = {
 
 // Report APIs
 export const reportApi = {
-  getOrganization: () => api.get<any>('/o365/reports/organization'),
-  getOrganizationByTenant: (tenantId: number) => 
-    api.get<any>(`/o365/reports/tenant/${tenantId}/organization`),
+  getOrganization: () => api.get<Organization>('/o365/reports/organization'),
+  getOrganizationByTenant: (tenantId: number) =>
+    api.get<Organization>(`/o365/reports/tenant/${tenantId}/organization`),
   getOneDrive: (period = 'D7') => 
     api.get('/o365/reports/onedrive', { params: { period }, responseType: 'blob' }),
   getExchange: (period = 'D7') => 

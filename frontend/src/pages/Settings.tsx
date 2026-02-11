@@ -5,10 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Key } from 'lucide-react'
+import { Loader2, Key, User, Sun, Moon, Monitor } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { PageHeader } from '@/components/PageHeader'
+import { useAuthStore } from '@/store/auth'
+import { useThemeStore } from '@/store/theme'
+import { cn } from '@/utils/utils'
 
 export function Settings() {
+  const { user } = useAuthStore()
+  const { theme, setTheme } = useThemeStore()
   const [formData, setFormData] = useState({
     old_password: '',
     new_password: '',
@@ -55,13 +61,81 @@ export function Settings() {
     changePasswordMutation.mutate()
   }
 
+  const themeOptions = [
+    { value: 'light' as const, label: '浅色', icon: Sun },
+    { value: 'dark' as const, label: '深色', icon: Moon },
+    { value: 'system' as const, label: '跟随系统', icon: Monitor },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">系统设置</h2>
-        <p className="text-muted-foreground mt-2">管理您的账户和安全设置</p>
-      </div>
+      <PageHeader
+        title="系统设置"
+        subtitle="管理您的账户和安全设置"
+      />
+
+      {/* Profile Card */}
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <User className="h-5 w-5 text-primary" />
+            <CardTitle>个人信息</CardTitle>
+          </div>
+          <CardDescription>当前登录账户的基本信息</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <div className="text-sm text-muted-foreground">用户名</div>
+              <div className="font-medium">{user?.username || '-'}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">邮箱</div>
+              <div className="font-medium">{user?.email || '-'}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">角色</div>
+              <div className="font-medium">{user?.is_superuser ? '超级管理员' : '普通用户'}</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Theme Card */}
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Sun className="h-5 w-5 text-primary" />
+            <CardTitle>外观设置</CardTitle>
+          </div>
+          <CardDescription>选择您喜欢的界面主题</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-3">
+            {themeOptions.map((option) => {
+              const Icon = option.icon
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setTheme(option.value)
+                    toast.success(`已切换到${option.label}模式`)
+                  }}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors",
+                    theme === option.value
+                      ? "border-primary bg-primary/5"
+                      : "border-transparent bg-gray-50 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
+                  )}
+                >
+                  <Icon className="h-6 w-6" />
+                  <span className="text-sm font-medium">{option.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Change Password Card */}
       <Card className="max-w-2xl">

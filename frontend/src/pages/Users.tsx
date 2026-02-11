@@ -13,8 +13,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Trash2, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Search, CheckCircle2, XCircle, Loader2, Users as UsersIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { PageHeader } from '@/components/PageHeader'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -133,19 +134,16 @@ export function Users() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">用户管理</h2>
-          <p className="text-muted-foreground mt-2">
-            管理 Office 365 用户账户
-          </p>
-        </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          创建用户
-        </Button>
-      </div>
+      <PageHeader
+        title="用户管理"
+        subtitle="管理 Office 365 用户账户"
+        actions={
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            创建用户
+          </Button>
+        }
+      />
 
       {/* Search */}
       <Card>
@@ -174,17 +172,24 @@ export function Users() {
           {isLoading ? (
             <LoadingSpinner />
           ) : users?.length === 0 ? (
-            <EmptyState message={debouncedSearch ? '未找到匹配的用户' : '暂无用户，请创建第一个用户'} />
+            <EmptyState message={debouncedSearch ? '未找到匹配的用户' : '暂无用户，请创建第一个用户'} icon={UsersIcon} />
           ) : (
-            <div className="space-y-3">
-              {users?.map((user) => (
-                <div
-                  key={user.id}
-                  className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-900">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-semibold">状态</th>
+                    <th className="px-4 py-2 text-left font-semibold">UPN</th>
+                    <th className="px-4 py-2 text-left font-semibold">显示名称</th>
+                    <th className="px-4 py-2 text-left font-semibold">位置</th>
+                    <th className="px-4 py-2 text-left font-semibold">许可证</th>
+                    <th className="px-4 py-2 text-right font-semibold">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {users?.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <td className="px-4 py-2">
                         {user.accountEnabled ? (
                           <span className="flex items-center text-xs text-green-600 dark:text-green-400">
                             <CheckCircle2 className="h-4 w-4 mr-1" />
@@ -196,50 +201,50 @@ export function Users() {
                             禁用
                           </span>
                         )}
-                        <span className="text-sm text-muted-foreground">{user.userPrincipalName || '-'}</span>
-                        <h3 className="font-semibold">{user.displayName || '-'}</h3>
-                        {user.usageLocation && (
-                          <span className="text-xs text-muted-foreground">({user.usageLocation})</span>
-                        )}
-                      </div>
-                      {user.assignedLicenses && user.assignedLicenses.length > 0 && (
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          订阅: {user.assignedLicenses.join(', ')}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">{user.userPrincipalName || '-'}</td>
+                      <td className="px-4 py-2 font-semibold">{user.displayName || '-'}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{user.usageLocation || '-'}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {user.assignedLicenses && user.assignedLicenses.length > 0
+                          ? user.assignedLicenses.join(', ')
+                          : '-'}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          {user.accountEnabled ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => disableMutation.mutate(user.id)}
+                              disabled={disableMutation.isPending}
+                            >
+                              禁用
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => enableMutation.mutate(user.id)}
+                              disabled={enableMutation.isPending}
+                            >
+                              启用
+                            </Button>
+                          )}
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setDeleteConfirm({ open: true, user })}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {user.accountEnabled ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => disableMutation.mutate(user.id)}
-                          disabled={disableMutation.isPending}
-                        >
-                          禁用
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => enableMutation.mutate(user.id)}
-                          disabled={enableMutation.isPending}
-                        >
-                          启用
-                        </Button>
-                      )}
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setDeleteConfirm({ open: true, user })}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

@@ -7,6 +7,23 @@ from app.config import get_settings
 
 settings = get_settings()
 
+# Shared aiohttp session for connection reuse
+_shared_session: aiohttp.ClientSession | None = None
+
+
+async def get_shared_session() -> aiohttp.ClientSession:
+    global _shared_session
+    if _shared_session is None or _shared_session.closed:
+        _shared_session = aiohttp.ClientSession()
+    return _shared_session
+
+
+async def close_shared_session():
+    global _shared_session
+    if _shared_session and not _shared_session.closed:
+        await _shared_session.close()
+        _shared_session = None
+
 # Load SKU map for license name translation
 _sku_map = None
 
@@ -47,36 +64,36 @@ class GraphAPIService:
     ) -> Dict[str, Any]:
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.request(
-                method=method,
-                url=url,
-                headers=self.get_headers(),
-                json=data,
-                params=params
-            ) as response:
-                if response.status == 401 and _retry_count < 1:
-                    self._token = None
-                    return await self._make_request(method, endpoint, data, params, _retry_count=_retry_count + 1)
-                
-                # Handle 204 No Content (successful deletion)
-                if response.status == 204:
+        session = await get_shared_session()
+        async with session.request(
+            method=method,
+            url=url,
+            headers=self.get_headers(),
+            json=data,
+            params=params
+        ) as response:
+            if response.status == 401 and _retry_count < 1:
+                self._token = None
+                return await self._make_request(method, endpoint, data, params, _retry_count=_retry_count + 1)
+
+            # Handle 204 No Content (successful deletion)
+            if response.status == 204:
+                return {"success": True}
+
+            # Try to parse JSON response
+            try:
+                response_data = await response.json()
+            except Exception:
+                # If not JSON, return empty dict for successful responses
+                if 200 <= response.status < 300:
                     return {"success": True}
-                
-                # Try to parse JSON response
-                try:
-                    response_data = await response.json()
-                except Exception:
-                    # If not JSON, return empty dict for successful responses
-                    if 200 <= response.status < 300:
-                        return {"success": True}
-                    else:
-                        raise Exception(f"Graph API error: {response.status} - Non-JSON response")
-                
-                if response.status >= 400:
-                    raise Exception(f"Graph API error: {response.status} - {response_data}")
-                
-                return response_data
+                else:
+                    raise Exception(f"Graph API error: {response.status} - Non-JSON response")
+
+            if response.status >= 400:
+                raise Exception(f"Graph API error: {response.status} - {response_data}")
+
+            return response_data
     
     async def get_users(self, filter_query: Optional[str] = None, top: int = 100) -> List[Dict[str, Any]]:
         params = {
@@ -159,28 +176,28 @@ class GraphAPIService:
         """Get directory subscriptions with expiration dates from beta endpoint"""
         # Note: This uses the beta endpoint which may have different behavior
         url = f"https://graph.microsoft.com/beta/directory/subscriptions"
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.get_headers()) as response:
-                if response.status == 401:
-                    self._token = None
-                    return await self.get_directory_subscriptions()
-                
-                if response.status >= 400:
-                    # Log the error but don't fail - subscriptions endpoint may not be available
-                    try:
-                        error_data = await response.json()
-                        print(f"Warning: Failed to get directory subscriptions: {response.status} - {error_data}")
-                    except Exception:
-                        print(f"Warning: Failed to get directory subscriptions: {response.status}")
-                    return []
-                
+
+        session = await get_shared_session()
+        async with session.get(url, headers=self.get_headers()) as response:
+            if response.status == 401:
+                self._token = None
+                return await self.get_directory_subscriptions()
+
+            if response.status >= 400:
+                # Log the error but don't fail - subscriptions endpoint may not be available
                 try:
-                    response_data = await response.json()
-                    return response_data.get("value", [])
-                except Exception as e:
-                    print(f"Warning: Failed to parse directory subscriptions response: {e}")
-                    return []
+                    error_data = await response.json()
+                    print(f"Warning: Failed to get directory subscriptions: {response.status} - {error_data}")
+                except Exception:
+                    print(f"Warning: Failed to get directory subscriptions: {response.status}")
+                return []
+
+            try:
+                response_data = await response.json()
+                return response_data.get("value", [])
+            except Exception as e:
+                print(f"Warning: Failed to parse directory subscriptions response: {e}")
+                return []
     
     async def get_directory_roles(self) -> List[Dict[str, Any]]:
         result = await self._make_request("GET", "/directoryRoles")
@@ -205,27 +222,35 @@ class GraphAPIService:
         return orgs[0] if orgs else {}
     
     async def get_onedrive_usage_report(self, period: str = "D7") -> bytes:
+        allowed_periods = {"D7", "D30", "D90", "D180"}
+        if period not in allowed_periods:
+            raise ValueError(f"Invalid period. Allowed values: {allowed_periods}")
         endpoint = f"/reports/getOneDriveUsageAccountDetail(period='{period}')"
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.get_headers()) as response:
-                if response.status >= 400:
-                    raise Exception(f"Failed to get OneDrive report: {response.status}")
-                return await response.read()
+
+        session = await get_shared_session()
+        async with session.get(url, headers=self.get_headers()) as response:
+            if response.status >= 400:
+                raise Exception(f"Failed to get OneDrive report: {response.status}")
+            return await response.read()
     
     async def get_exchange_usage_report(self, period: str = "D7") -> bytes:
+        allowed_periods = {"D7", "D30", "D90", "D180"}
+        if period not in allowed_periods:
+            raise ValueError(f"Invalid period. Allowed values: {allowed_periods}")
         endpoint = f"/reports/getMailboxUsageDetail(period='{period}')"
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.get_headers()) as response:
-                if response.status >= 400:
-                    raise Exception(f"Failed to get Exchange report: {response.status}")
-                return await response.read()
+
+        session = await get_shared_session()
+        async with session.get(url, headers=self.get_headers()) as response:
+            if response.status >= 400:
+                raise Exception(f"Failed to get Exchange report: {response.status}")
+            return await response.read()
     
     async def search_users(self, keyword: str) -> List[Dict[str, Any]]:
-        filter_query = f"startswith(displayName,'{keyword}') or startswith(userPrincipalName,'{keyword}')"
+        # Escape single quotes to prevent OData filter injection
+        escaped_keyword = keyword.replace("'", "''")
+        filter_query = f"startswith(displayName,'{escaped_keyword}') or startswith(userPrincipalName,'{escaped_keyword}')"
         return await self.get_users(filter_query=filter_query)
     
     async def batch_create_users(self, users_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -245,45 +270,45 @@ class GraphAPIService:
         """
         endpoint = "/sites/root/drive/root/permissions"
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(url, headers=self.get_headers()) as response:
-                    status_code = response.status
-                    
-                    if status_code == 200:
-                        data = await response.json()
-                        value = data.get("value", [])
-                        if len(value) > 0:
-                            return {
-                                "status": "available",
-                                "message": "SharePoint Online 可用"
-                            }
-                        else:
-                            return {
-                                "status": "unavailable",
-                                "message": "SharePoint Online 不可用"
-                            }
-                    elif status_code == 400:
+
+        session = await get_shared_session()
+        try:
+            async with session.get(url, headers=self.get_headers()) as response:
+                status_code = response.status
+
+                if status_code == 200:
+                    data = await response.json()
+                    value = data.get("value", [])
+                    if len(value) > 0:
                         return {
-                            "status": "no_subscription",
-                            "message": "无 SharePoint Online 订阅"
+                            "status": "available",
+                            "message": "SharePoint Online 可用"
                         }
-                    elif status_code in [404, 429, 502]:
+                    else:
                         return {
                             "status": "unavailable",
                             "message": "SharePoint Online 不可用"
                         }
-                    else:
-                        return {
-                            "status": "unknown",
-                            "message": f"未知状态 (HTTP {status_code})"
-                        }
-            except Exception as e:
-                return {
-                    "status": "error",
-                    "message": f"检查失败: {str(e)}"
-                }
+                elif status_code == 400:
+                    return {
+                        "status": "no_subscription",
+                        "message": "无 SharePoint Online 订阅"
+                    }
+                elif status_code in [404, 429, 502]:
+                    return {
+                        "status": "unavailable",
+                        "message": "SharePoint Online 不可用"
+                    }
+                else:
+                    return {
+                        "status": "unknown",
+                        "message": f"未知状态 (HTTP {status_code})"
+                    }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"检查失败: {str(e)}"
+            }
     
     async def update_client_secret(self, application_id: str, delete_old_secret: bool = False) -> Dict[str, Any]:
         """

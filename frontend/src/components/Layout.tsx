@@ -1,22 +1,22 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { 
-  LayoutDashboard, 
-  Building2, 
+import {
+  LayoutDashboard,
+  Building2,
   Menu,
   X,
   Settings,
   LogOut,
   User,
-  Sun,
-  Moon,
-  Monitor
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/utils/utils'
 import { useAuthStore } from '@/store/auth'
-import { useThemeStore } from '@/store/theme'
 import toast from 'react-hot-toast'
 import { Breadcrumb } from '@/components/Breadcrumb'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const navigation = [
   { name: '仪表板', href: '/dashboard', icon: LayoutDashboard },
@@ -28,23 +28,18 @@ export function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [themeMenuOpen, setThemeMenuOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true')
   const { user, clearAuth } = useAuthStore()
-  const { theme, setTheme } = useThemeStore()
+
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed))
+  }, [sidebarCollapsed])
 
   const handleLogout = () => {
     clearAuth()
     toast.success('已退出登录')
     navigate('/login')
   }
-
-  const themeOptions = [
-    { value: 'light' as const, label: '浅色', icon: Sun },
-    { value: 'dark' as const, label: '深色', icon: Moon },
-    { value: 'system' as const, label: '跟随系统', icon: Monitor },
-  ]
-
-  const currentThemeOption = themeOptions.find(opt => opt.value === theme) || themeOptions[2]
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:flex">
@@ -60,12 +55,13 @@ export function Layout() {
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-0 lg:flex-shrink-0',
+          'fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-all duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-0 lg:flex-shrink-0',
+          sidebarCollapsed ? 'lg:w-16' : 'lg:w-64',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold text-primary">O365 管理系统</h1>
+          {!sidebarCollapsed && <h1 className="text-xl font-bold text-primary">O365 管理系统</h1>}
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-700 dark:text-gray-300"
@@ -73,7 +69,7 @@ export function Layout() {
             <X className="h-6 w-6" />
           </button>
         </div>
-        <nav className="mt-6 px-3">
+        <nav className="mt-6 px-3 flex-1">
           {navigation.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/')
@@ -83,18 +79,29 @@ export function Layout() {
                 to={item.href}
                 className={cn(
                   'flex items-center px-3 py-2.5 mb-1 rounded-lg text-sm font-medium transition-colors',
+                  sidebarCollapsed ? 'justify-center' : '',
                   isActive
                     ? 'bg-primary text-white'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 )}
                 onClick={() => setSidebarOpen(false)}
+                title={sidebarCollapsed ? item.name : undefined}
               >
-                <Icon className="mr-3 h-5 w-5" />
-                {item.name}
+                <Icon className={cn('h-5 w-5', sidebarCollapsed ? '' : 'mr-3')} />
+                {!sidebarCollapsed && item.name}
               </Link>
             )
           })}
         </nav>
+        <div className="hidden lg:block px-3 pb-4">
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="flex items-center justify-center w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
+          >
+            {sidebarCollapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Main content */}
@@ -119,51 +126,9 @@ export function Layout() {
                 <User className="h-4 w-4" />
                 <span>{user?.username || 'Guest'}</span>
               </div>
-              
+
               {/* Theme Toggle */}
-              <div className="relative">
-                <button
-                  onClick={() => setThemeMenuOpen(!themeMenuOpen)}
-                  className="flex items-center gap-x-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                  title="切换主题"
-                >
-                  <currentThemeOption.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{currentThemeOption.label}</span>
-                </button>
-                
-                {themeMenuOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-10" 
-                      onClick={() => setThemeMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
-                      {themeOptions.map((option) => {
-                        const Icon = option.icon
-                        return (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setTheme(option.value)
-                              setThemeMenuOpen(false)
-                              toast.success(`已切换到${option.label}模式`)
-                            }}
-                            className={cn(
-                              "w-full flex items-center gap-x-2 px-4 py-2 text-sm transition-colors",
-                              theme === option.value 
-                                ? "bg-primary/10 text-primary dark:bg-primary/20" 
-                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                            <span>{option.label}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
+              <ThemeToggle />
 
               <button
                 onClick={handleLogout}
@@ -181,7 +146,11 @@ export function Layout() {
         <main className="py-6">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Breadcrumb />
-            <Outlet />
+            <ErrorBoundary>
+              <div className="animate-in fade-in duration-200">
+                <Outlet />
+              </div>
+            </ErrorBoundary>
           </div>
         </main>
       </div>

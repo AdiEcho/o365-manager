@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
+    db_echo: bool = False
+    cors_origins: str = "http://localhost:5173,http://localhost:8000"
+
     graph_api_endpoint: str = "https://graph.microsoft.com/v1.0"
     graph_api_scope: str = "https://graph.microsoft.com/.default"
     

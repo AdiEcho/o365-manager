@@ -7,6 +7,7 @@ from pathlib import Path
 from app.database import init_db
 from app.api import auth, tenants, o365_users, licenses, domains, roles, reports
 from app.config import get_settings
+from app.services.graph_service import close_shared_session
 
 settings = get_settings()
 
@@ -15,6 +16,7 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     await init_db()
     yield
+    await close_shared_session()
 
 
 app = FastAPI(
@@ -26,10 +28,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",")],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # API路由

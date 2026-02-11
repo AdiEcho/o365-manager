@@ -21,7 +21,7 @@ export function Login() {
   const loginMutation = useMutation({
     mutationFn: async () => {
       const loginRes = await authApi.login(formData)
-      setAuth(loginRes.data.access_token, null as any)
+      setAuth(loginRes.data.access_token, null)
       const userRes = await authApi.getCurrentUser()
       return { token: loginRes.data.access_token, user: userRes.data }
     },
@@ -45,7 +45,7 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-3 text-center">
           <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center">

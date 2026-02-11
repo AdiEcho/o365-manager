@@ -55,7 +55,7 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
-
+.omc/
 # Project specific
 o365_manager.db
 

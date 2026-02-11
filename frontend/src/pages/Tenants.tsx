@@ -20,6 +20,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { TenantCardCompact, TenantCardFull } from '@/components/tenant/TenantCards'
+import { PageHeader } from '@/components/PageHeader'
 import { UpdateSecretDialog, ConfigurePermissionsDialog } from '@/components/tenant/TenantDialogs'
 
 export function Tenants() {
@@ -236,22 +237,21 @@ export function Tenants() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">租户管理</h2>
-          <p className="text-muted-foreground mt-2">管理多个 Microsoft 365 租户</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="view-mode" className="text-sm">缩略视图</Label>
-            <Switch id="view-mode" checked={viewMode === 'compact'} onCheckedChange={(checked) => setViewMode(checked ? 'compact' : 'full')} />
-          </div>
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />添加租户
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="租户管理"
+        subtitle="管理多个 Microsoft 365 租户"
+        actions={
+          <>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="view-mode" className="text-sm">缩略视图</Label>
+              <Switch id="view-mode" checked={viewMode === 'compact'} onCheckedChange={(checked) => setViewMode(checked ? 'compact' : 'full')} />
+            </div>
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />添加租户
+            </Button>
+          </>
+        }
+      />
 
       {/* Tenants List */}
       <Card>
