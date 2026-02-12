@@ -87,20 +87,20 @@ export function Dashboard() {
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.name}>
+            <Card key={stat.name} className="transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {stat.name}
                 </CardTitle>
-                <div className={`${stat.bgColor} p-2 rounded-lg`}>
+                <div className={`${stat.bgColor} p-2.5 rounded-xl`}>
                   <Icon className={`h-4 w-4 ${stat.color}`} />
                 </div>
               </CardHeader>
               <CardContent>
                 {stat.loading ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  <Loader2 className="h-7 w-7 animate-spin text-gray-300" />
                 ) : (
-                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
                 )}
               </CardContent>
             </Card>
@@ -137,12 +137,12 @@ export function Dashboard() {
               {tenants?.items.slice(0, 9).map((tenant) => (
                 <Card
                   key={tenant.id}
-                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  className="hover:shadow-lg transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group"
                   onClick={() => navigate('/tenants')}
                 >
                   <CardHeader className="pb-2 pt-3 px-3">
                     <div className="flex items-center space-x-2">
-                      <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30">
+                      <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30">
                         <Building2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -166,7 +166,7 @@ export function Dashboard() {
         <CardHeader className="cursor-pointer" onClick={toggleGuide}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-blue-600" />
+              <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               <CardTitle>Azure AD 应用配置指南</CardTitle>
             </div>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

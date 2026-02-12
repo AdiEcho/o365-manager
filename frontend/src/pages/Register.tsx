@@ -68,17 +68,17 @@ export function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-            <ShieldCheck className="h-6 w-6 text-white" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <Card className="w-full max-w-md shadow-2xl backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border border-white/20 dark:border-gray-700/30">
+        <CardHeader className="space-y-4 text-center">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 animate-[float_3s_ease-in-out_infinite]">
+            <ShieldCheck className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl">初始化系统</CardTitle>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">初始化系统</CardTitle>
           <CardDescription>创建第一个管理员账号</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="username">用户名 *</Label>
               <Input
@@ -133,7 +133,7 @@ export function Register() {
             </div>
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 transition-all duration-200"
               disabled={registerMutation.isPending}
             >
               {registerMutation.isPending ? (
@@ -146,8 +146,11 @@ export function Register() {
               )}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-muted-foreground">
+          <div className="mt-4 text-center text-sm text-muted-foreground">
             <p>此账号将拥有系统的完全管理权限</p>
+          </div>
+          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 text-center text-xs text-muted-foreground">
+            Office 365 Multi-Tenant Manager v1.0
           </div>
         </CardContent>
       </Card>

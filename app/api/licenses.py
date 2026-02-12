@@ -9,7 +9,8 @@ from datetime import datetime, timedelta, timezone
 from app.database import get_db
 from app.schemas import O365LicenseResponse
 from app.services.graph_service import GraphAPIService
-from app.api.o365_users import get_graph_service, get_graph_service_by_id
+from app.api.o365_users import get_graph_service
+from app.api.deps import get_graph_service_by_id
 from app.models import LicenseCache, User
 from app.auth import get_current_user
 

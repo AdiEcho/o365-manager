@@ -78,7 +78,7 @@ export function Licenses() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">总许可证</CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
@@ -88,7 +88,7 @@ export function Licenses() {
             <p className="text-xs text-muted-foreground">已启用的许可证总数</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">已使用</CardTitle>
             <Award className="h-4 w-4 text-blue-600" />
@@ -98,7 +98,7 @@ export function Licenses() {
             <p className="text-xs text-muted-foreground">已分配给用户的许可证</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">可用</CardTitle>
             <Award className="h-4 w-4 text-green-600" />
@@ -149,14 +149,12 @@ export function Licenses() {
                         <span>使用率</span>
                         <span className="font-medium">{usagePercent.toFixed(1)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden">
                         <div
-                          className={`h-3 rounded-full transition-all duration-500 ${
-                            usagePercent >= 90
-                              ? 'bg-red-600'
-                              : usagePercent >= 70
-                              ? 'bg-yellow-600'
-                              : 'bg-green-600'
+                          className={`h-3 rounded-full transition-all duration-700 ${
+                            usagePercent >= 90 ? 'bg-gradient-to-r from-red-500 to-red-600'
+                            : usagePercent >= 70 ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                            : 'bg-gradient-to-r from-green-500 to-emerald-500'
                           }`}
                           style={{ width: `${usagePercent}%` }}
                         />

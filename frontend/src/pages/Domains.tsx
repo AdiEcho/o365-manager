@@ -112,8 +112,8 @@ export function Domains() {
               {domains?.map((domain) => (
                 <div
                   key={domain.id}
-                  className={`p-4 border rounded-lg transition-colors ${
-                    domain.isDefault ? 'border-primary bg-primary/5' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                  className={`p-4 border rounded-xl transition-all duration-200 ${
+                    domain.isDefault ? 'border-primary/50 bg-primary/5 shadow-sm' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -121,7 +121,7 @@ export function Domains() {
                       <div className="flex items-center space-x-3">
                         <h3 className="font-semibold text-lg">{domain.id}</h3>
                         {domain.isDefault && (
-                          <span className="px-2 py-1 text-xs font-medium bg-primary text-white rounded">
+                          <span className="px-2.5 py-1 text-xs font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full">
                             默认域名
                           </span>
                         )}

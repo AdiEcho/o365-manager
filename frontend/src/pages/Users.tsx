@@ -147,14 +147,14 @@ export function Users() {
 
       {/* Search */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="py-4">
           <div className="flex items-center space-x-2">
             <Search className="h-5 w-5 text-gray-400" />
             <Input
               placeholder="搜索用户名或邮箱..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              className="max-w-md"
+              className="max-w-md bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
             />
             {(isFetching && debouncedSearch !== searchKeyword) && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -176,7 +176,7 @@ export function Users() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-900">
+                <thead className="bg-gray-50/80 dark:bg-gray-800/50">
                   <tr>
                     <th className="px-4 py-2 text-left font-semibold">状态</th>
                     <th className="px-4 py-2 text-left font-semibold">UPN</th>
@@ -188,7 +188,7 @@ export function Users() {
                 </thead>
                 <tbody className="divide-y">
                   {users?.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <tr key={user.id} className="hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors">
                       <td className="px-4 py-2">
                         {user.accountEnabled ? (
                           <span className="flex items-center text-xs text-green-600 dark:text-green-400">
@@ -218,6 +218,7 @@ export function Users() {
                               size="sm"
                               onClick={() => disableMutation.mutate(user.id)}
                               disabled={disableMutation.isPending}
+                              className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
                             >
                               禁用
                             </Button>
@@ -227,6 +228,7 @@ export function Users() {
                               size="sm"
                               onClick={() => enableMutation.mutate(user.id)}
                               disabled={enableMutation.isPending}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
                             >
                               启用
                             </Button>

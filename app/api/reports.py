@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User
 from app.services.graph_service import GraphAPIService
-from app.api.o365_users import get_graph_service, get_graph_service_by_id
+from app.api.o365_users import get_graph_service
+from app.api.deps import get_graph_service_by_id
 from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/o365/reports", tags=["O365 Reports"])
