@@ -1,9 +1,12 @@
 import aiohttp
 import json
+import logging
 import os
 from typing import List, Dict, Any, Optional
 from app.services.msal_service import MSALService
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -172,31 +175,31 @@ class GraphAPIService:
         result = await self._make_request("GET", "/subscribedSkus")
         return result.get("value", [])
     
-    async def get_directory_subscriptions(self) -> List[Dict[str, Any]]:
+    async def get_directory_subscriptions(self, _retry_count: int = 0) -> List[Dict[str, Any]]:
         """Get directory subscriptions with expiration dates from beta endpoint"""
         # Note: This uses the beta endpoint which may have different behavior
         url = f"https://graph.microsoft.com/beta/directory/subscriptions"
 
         session = await get_shared_session()
         async with session.get(url, headers=self.get_headers()) as response:
-            if response.status == 401:
+            if response.status == 401 and _retry_count < 1:
                 self._token = None
-                return await self.get_directory_subscriptions()
+                return await self.get_directory_subscriptions(_retry_count=_retry_count + 1)
 
             if response.status >= 400:
                 # Log the error but don't fail - subscriptions endpoint may not be available
                 try:
                     error_data = await response.json()
-                    print(f"Warning: Failed to get directory subscriptions: {response.status} - {error_data}")
+                    logger.warning(f"Failed to get directory subscriptions: {response.status} - {error_data}")
                 except Exception:
-                    print(f"Warning: Failed to get directory subscriptions: {response.status}")
+                    logger.warning(f"Failed to get directory subscriptions: {response.status}")
                 return []
 
             try:
                 response_data = await response.json()
                 return response_data.get("value", [])
             except Exception as e:
-                print(f"Warning: Failed to parse directory subscriptions response: {e}")
+                logger.warning(f"Failed to parse directory subscriptions response: {e}")
                 return []
     
     async def get_directory_roles(self) -> List[Dict[str, Any]]:
@@ -372,7 +375,7 @@ class GraphAPIService:
                                 f"/applications/{app_object_id}/removePassword",
                                 data={"keyId": old_key_to_delete}
                             )
-                            print(f"Successfully deleted old credential {old_key_to_delete}")
+                            logger.info(f"Successfully deleted old credential {old_key_to_delete}")
                             deletion_msg = " (已删除旧密钥)"
                             break
                         except Exception as e:
@@ -382,11 +385,11 @@ class GraphAPIService:
                                 if attempt < max_retries - 1:
                                     # Wait and retry with exponential backoff
                                     await asyncio.sleep(1 * (attempt + 1))
-                                    print(f"Retrying deletion of credential {old_key_to_delete} (attempt {attempt + 2}/{max_retries})")
+                                    logger.info(f"Retrying deletion of credential {old_key_to_delete} (attempt {attempt + 2}/{max_retries})")
                                     continue
                             
                             # Log failure
-                            print(f"Warning: Failed to delete credential {old_key_to_delete}: {error_msg}")
+                            logger.warning(f"Failed to delete credential {old_key_to_delete}: {error_msg}")
                             deletion_msg = " (旧密钥删除失败)"
                             break
                 else:
@@ -492,7 +495,7 @@ class GraphAPIService:
                 data=required_permissions
             )
             
-            print(f"Successfully configured permissions for application {application_id}")
+            logger.info(f"Successfully configured permissions for application {application_id}")
             
             # Get tenant ID for consent URL
             # We'll extract it from the token or use a default

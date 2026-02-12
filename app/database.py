@@ -84,6 +84,6 @@ async def init_db():
         users = result.scalars().all()
         
         if not users:
-            print("Database initialized. Please register your first admin user.")
+            logger.info("Database initialized. Please register your first admin user.")
         else:
-            print(f"Database initialized. Found {len(users)} user(s) in the system.")
+            logger.info(f"Database initialized. Found {len(users)} user(s) in the system.")

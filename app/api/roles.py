@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -6,8 +8,10 @@ from app.models import User
 from app.schemas import O365RoleAssignment, MessageResponse
 from app.services.graph_service import GraphAPIService
 from app.api.o365_users import get_graph_service
-from app.api.deps import get_graph_service_by_id
+from app.api.deps import get_graph_service_by_id, raise_graph_api_error
 from app.auth import get_current_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/o365/roles", tags=["O365 Roles"])
 
@@ -22,8 +26,11 @@ async def list_directory_roles(
     try:
         roles = await graph_service.get_directory_roles()
         return roles
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取角色列表失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取角色列表失败")
 
 
 @router.get("/tenant/{tenant_id}")
@@ -39,7 +46,8 @@ async def list_directory_roles_by_tenant(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取角色列表失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取角色列表失败")
 
 
 @router.get("/{role_id}/members")
@@ -51,8 +59,11 @@ async def list_role_members(
     try:
         members = await graph_service.get_directory_role_members(role_id)
         return members
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取角色成员失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取角色成员失败")
 
 
 @router.get("/tenant/{tenant_id}/{role_id}/members")
@@ -69,7 +80,8 @@ async def list_role_members_by_tenant(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取角色成员失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取角色成员失败")
 
 
 @router.post("/assign", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
@@ -84,8 +96,11 @@ async def assign_role(
             user_id=role_assignment.user_id
         )
         return MessageResponse(message="Role assigned successfully")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"分配角色失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "分配角色失败")
 
 
 @router.post("/revoke", response_model=MessageResponse)
@@ -100,8 +115,11 @@ async def revoke_role(
             user_id=role_assignment.user_id
         )
         return MessageResponse(message="Role revoked successfully")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"撤销角色失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "撤销角色失败")
 
 
 @router.post("/{user_id}/promote", response_model=MessageResponse)
@@ -116,8 +134,11 @@ async def promote_to_global_admin(
             user_id=user_id
         )
         return MessageResponse(message="User promoted to Global Administrator")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"提升为管理员失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "提升为管理员失败")
 
 
 @router.post("/{user_id}/demote", response_model=MessageResponse)
@@ -132,5 +153,8 @@ async def demote_from_global_admin(
             user_id=user_id
         )
         return MessageResponse(message="User demoted from Global Administrator")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"撤销管理员权限失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "撤销管理员权限失败")

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Building2, CheckCircle2, XCircle, Loader2, Plus, Settings, ExternalLink, Info, Key, FileCheck, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
 import { TenantLicensesSummary } from '@/components/TenantLicensesSummary'
 import { PageHeader } from '@/components/PageHeader'
+import { CardSkeleton } from '@/components/CardSkeleton'
 
 export function Dashboard() {
   const navigate = useNavigate()
@@ -120,9 +121,7 @@ export function Dashboard() {
         </CardHeader>
         <CardContent>
           {tenantsLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
+            <CardSkeleton count={3} />
           ) : tenants?.items.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -138,7 +137,7 @@ export function Dashboard() {
                 <Card
                   key={tenant.id}
                   className="hover:shadow-lg transition-all duration-200 cursor-pointer hover:-translate-y-0.5 group"
-                  onClick={() => navigate('/tenants')}
+                  onClick={() => navigate(`/tenants/${tenant.id}/licenses`)}
                 >
                   <CardHeader className="pb-2 pt-3 px-3">
                     <div className="flex items-center space-x-2">
@@ -382,39 +381,39 @@ export function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">用户管理（创建/删除/更新）</td>
                     <td className="px-4 py-2 text-muted-foreground">User.ReadWrite.All, Directory.ReadWrite.All</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">启用/禁用用户</td>
                     <td className="px-4 py-2 text-muted-foreground">User.ReadWrite.All</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">角色管理（提权/撤权）</td>
                     <td className="px-4 py-2 text-muted-foreground">RoleManagement.ReadWrite.Directory</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">域名管理</td>
                     <td className="px-4 py-2 text-muted-foreground">Domain.ReadWrite.All</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">查看许可证</td>
                     <td className="px-4 py-2 text-muted-foreground">Organization.Read.All</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">生成报告</td>
                     <td className="px-4 py-2 text-muted-foreground">Reports.Read.All</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">配置权限</td>
                     <td className="px-4 py-2 text-muted-foreground">Application.ReadWrite.All</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">更新密钥</td>
                     <td className="px-4 py-2 text-muted-foreground">Application.ReadWrite.All</td>
                   </tr>
-                  <tr>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-4 py-2">检查 SPO 状态</td>
                     <td className="px-4 py-2 text-muted-foreground">Sites.FullControl.All</td>
                   </tr>

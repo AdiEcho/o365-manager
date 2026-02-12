@@ -26,7 +26,7 @@ try:
     with open(SKU_MAP_PATH, "r", encoding="utf-8") as f:
         SKU_MAP = json.load(f)
 except Exception as e:
-    print(f"Warning: Failed to load sku_map.json: {e}")
+    logger.warning(f"Failed to load sku_map.json: {e}")
     SKU_MAP = {}
 
 

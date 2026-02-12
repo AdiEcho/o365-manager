@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -10,36 +12,11 @@ from app.schemas import (
 from app.services.msal_service import MSALService
 from app.services.graph_service import GraphAPIService
 from app.auth import get_current_user
+from app.api.deps import get_graph_service_by_id, raise_graph_api_error
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/o365/users", tags=["O365 Users"])
-
-
-async def get_graph_service_by_id(tenant_id: int, db: AsyncSession) -> GraphAPIService:
-    """Get GraphAPIService for a specific tenant by ID"""
-    result = await db.execute(
-        select(Tenant).where(Tenant.id == tenant_id)
-    )
-    tenant = result.scalar_one_or_none()
-    
-    if not tenant:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Tenant with ID {tenant_id} not found."
-        )
-    
-    if not tenant.is_active:
-        raise HTTPException(
-            status_code=400,
-            detail="Tenant is not active."
-        )
-    
-    msal_service = MSALService(
-        tenant_id=tenant.tenant_id,
-        client_id=tenant.client_id,
-        client_secret=tenant.client_secret
-    )
-    
-    return GraphAPIService(msal_service)
 
 
 async def get_graph_service(db: AsyncSession = Depends(get_db)) -> GraphAPIService:
@@ -74,8 +51,11 @@ async def list_users(
     try:
         users = await graph_service.get_users(filter_query=filter_query, top=top)
         return [O365UserResponse(**user) for user in users]
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取用户列表失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取用户列表失败")
 
 
 @router.get("/tenant/{tenant_id}", response_model=List[O365UserResponse])
@@ -93,7 +73,8 @@ async def list_users_by_tenant(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取用户列表失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取用户列表失败")
 
 
 @router.get("/search", response_model=List[O365UserResponse])
@@ -105,8 +86,11 @@ async def search_users(
     try:
         users = await graph_service.search_users(keyword)
         return [O365UserResponse(**user) for user in users]
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"搜索用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "搜索用户失败")
 
 
 @router.get("/tenant/{tenant_id}/search", response_model=List[O365UserResponse])
@@ -123,7 +107,8 @@ async def search_users_by_tenant(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"搜索用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "搜索用户失败")
 
 
 @router.get("/{user_id}", response_model=O365UserResponse)
@@ -135,8 +120,11 @@ async def get_user(
     try:
         user = await graph_service.get_user(user_id)
         return O365UserResponse(**user)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取用户详情失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取用户详情失败")
 
 
 @router.post("", response_model=O365UserResponse, status_code=status.HTTP_201_CREATED)
@@ -160,8 +148,11 @@ async def create_user(
         
         user = await graph_service.create_user(user_payload)
         return O365UserResponse(**user)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"创建用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "创建用户失败")
 
 
 @router.post("/batch", response_model=List[dict])
@@ -187,8 +178,11 @@ async def batch_create_users(
         
         results = await graph_service.batch_create_users(users_payload)
         return results
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"批量创建用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "批量创建用户失败")
 
 
 @router.patch("/{user_id}", response_model=O365UserResponse)
@@ -202,8 +196,11 @@ async def update_user(
         update_payload = user_data.model_dump(exclude_unset=True)
         user = await graph_service.update_user(user_id, update_payload)
         return O365UserResponse(**user)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"更新用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "更新用户失败")
 
 
 @router.delete("/{user_id}", response_model=MessageResponse)
@@ -215,8 +212,11 @@ async def delete_user(
     try:
         await graph_service.delete_user(user_id)
         return MessageResponse(message="User deleted successfully")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"删除用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "删除用户失败")
 
 
 @router.post("/{user_id}/enable", response_model=O365UserResponse)
@@ -228,8 +228,11 @@ async def enable_user(
     try:
         user = await graph_service.enable_user(user_id)
         return O365UserResponse(**user)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"启用用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "启用用户失败")
 
 
 @router.post("/{user_id}/disable", response_model=O365UserResponse)
@@ -241,5 +244,8 @@ async def disable_user(
     try:
         user = await graph_service.disable_user(user_id)
         return O365UserResponse(**user)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"禁用用户失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "禁用用户失败")

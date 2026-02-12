@@ -126,11 +126,11 @@ export function TenantLicensesSummary({ tenantId, compact = false }: TenantLicen
         </span>
       </div>
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="p-2 bg-blue-50 rounded">
+        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
           <div className="text-xs text-muted-foreground">总数</div>
           <div className="text-lg font-semibold text-blue-600">{totalEnabled}</div>
         </div>
-        <div className="p-2 bg-green-50 rounded">
+        <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded">
           <div className="text-xs text-muted-foreground">已分配</div>
           <div className="text-lg font-semibold text-green-600">{totalConsumed}</div>
         </div>

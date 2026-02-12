@@ -3,11 +3,15 @@ import { useParams } from 'react-router-dom'
 import { licenseApi } from '@/utils/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Award, Loader2, RefreshCw, AlertTriangle, XCircle } from 'lucide-react'
+import { Award, Loader2, RefreshCw, AlertTriangle, XCircle, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { PageHeader } from '@/components/PageHeader'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { EmptyState } from '@/components/EmptyState'
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+}
 
 export function Licenses() {
   const { tenantId } = useParams<{ tenantId: string }>()
@@ -77,7 +81,7 @@ export function Licenses() {
       />
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card className="transition-all duration-200 hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">总许可证</CardTitle>
@@ -108,6 +112,18 @@ export function Licenses() {
             <p className="text-xs text-muted-foreground">剩余可分配的许可证</p>
           </CardContent>
         </Card>
+        <Card className="transition-all duration-200 hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">即将过期</CardTitle>
+            <Clock className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-500">
+              {licenses?.filter(l => l.expires_at && new Date(l.expires_at).getTime() - Date.now() < 90 * 24 * 60 * 60 * 1000).length || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">90 天内到期的许可证</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Licenses List */}
@@ -121,11 +137,11 @@ export function Licenses() {
           ) : licenses?.length === 0 ? (
             <EmptyState message="暂无许可证信息" icon={Award} />
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 divide-y">
               {licenses?.map((license) => {
                 const usagePercent = license.enabled_units > 0 ? (license.consumed_units / license.enabled_units) * 100 : 0
                 return (
-                  <div key={license.sku_id} className="space-y-3">
+                  <div key={license.sku_id} className="space-y-3 pt-6 first:pt-0">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-lg">
@@ -170,6 +186,31 @@ export function Licenses() {
                         <XCircle className="h-4 w-4 inline mr-1" />错误: 许可证已用尽
                       </div>
                     )}
+                    {license.expires_at && (() => {
+                      const expiresDate = new Date(license.expires_at)
+                      const now = new Date()
+                      const daysUntilExpiry = Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                      const isExpired = daysUntilExpiry < 0
+                      const isExpiringSoon = !isExpired && daysUntilExpiry <= 30
+
+                      return (
+                        <div className={`text-sm p-2 rounded flex items-center gap-1.5 ${
+                          isExpired
+                            ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
+                            : isExpiringSoon
+                            ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+                            : 'text-muted-foreground'
+                        }`}>
+                          <Clock className="h-4 w-4 shrink-0" />
+                          {isExpired
+                            ? `已过期: ${formatDate(license.expires_at)}`
+                            : isExpiringSoon
+                            ? `即将过期 (${daysUntilExpiry} 天后): ${formatDate(license.expires_at)}`
+                            : `到期时间: ${formatDate(license.expires_at)}`
+                          }
+                        </div>
+                      )
+                    })()}
                   </div>
                 )
               })}

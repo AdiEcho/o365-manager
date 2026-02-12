@@ -5,10 +5,13 @@ Automatically generates and persists SECRET_KEY for JWT authentication.
 The key is stored in the database (system_config table).
 """
 
+import logging
 import secrets
 import sqlite3
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 def get_db_path() -> str:
@@ -41,7 +44,7 @@ def ensure_system_config_table(conn: sqlite3.Connection) -> None:
         """)
         conn.commit()
     except Exception as e:
-        print(f"Warning: Could not create system_config table: {e}")
+        logger.warning(f"Could not create system_config table: {e}")
 
 
 def get_secret_key_from_db(conn: sqlite3.Connection) -> Optional[str]:
@@ -54,7 +57,7 @@ def get_secret_key_from_db(conn: sqlite3.Connection) -> Optional[str]:
         if row and row[0] and len(row[0]) >= 32:
             return row[0]
     except Exception as e:
-        print(f"Warning: Could not read SECRET_KEY from database: {e}")
+        logger.warning(f"Could not read SECRET_KEY from database: {e}")
     return None
 
 
@@ -71,7 +74,7 @@ def save_secret_key_to_db(conn: sqlite3.Connection, key: str) -> bool:
         conn.commit()
         return True
     except Exception as e:
-        print(f"Warning: Could not save SECRET_KEY to database: {e}")
+        logger.warning(f"Could not save SECRET_KEY to database: {e}")
         return False
 
 
@@ -101,22 +104,22 @@ def get_or_create_secret_key() -> str:
             return existing_key
         
         # Generate new key
-        print("Generating new SECRET_KEY...")
+        logger.info("Generating new SECRET_KEY...")
         new_key = generate_secret_key()
-        
+
         # Save to database
         if save_secret_key_to_db(conn, new_key):
-            print(f"SECRET_KEY saved to database: {db_path}")
-            print(f"Key length: {len(new_key)} characters")
+            logger.info(f"SECRET_KEY saved to database: {db_path}")
+            logger.info(f"Key length: {len(new_key)} characters")
         else:
-            print("Warning: Using in-memory key (will be regenerated on restart)")
+            logger.warning("Using in-memory key (will be regenerated on restart)")
         
         conn.close()
         return new_key
         
     except Exception as e:
-        print(f"Error accessing database: {e}")
-        print("Generating temporary SECRET_KEY (will be regenerated on restart)")
+        logger.error(f"Error accessing database: {e}")
+        logger.warning("Generating temporary SECRET_KEY (will be regenerated on restart)")
         return generate_secret_key()
 
 
@@ -148,23 +151,23 @@ def rotate_secret_key() -> str:
                     (old_key,)
                 )
                 conn.commit()
-                print("Old key backed up in database (SECRET_KEY_BACKUP)")
+                logger.info("Old key backed up in database (SECRET_KEY_BACKUP)")
             except Exception as e:
-                print(f"Warning: Could not backup old key: {e}")
+                logger.warning(f"Could not backup old key: {e}")
         
         # Generate new key
         new_key = generate_secret_key()
         
         # Save new key
         if save_secret_key_to_db(conn, new_key):
-            print(f"New SECRET_KEY saved to database: {db_path}")
-            print(f"Key length: {len(new_key)} characters")
+            logger.info(f"New SECRET_KEY saved to database: {db_path}")
+            logger.info(f"Key length: {len(new_key)} characters")
         
         conn.close()
         return new_key
         
     except Exception as e:
-        print(f"Error rotating key: {e}")
+        logger.error(f"Error rotating key: {e}")
         return generate_secret_key()
 
 

@@ -1,6 +1,9 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -32,8 +35,8 @@ class Settings(BaseSettings):
             from app.secret_key_manager import get_or_create_secret_key
             generated_key = get_or_create_secret_key()
             if self.secret_key and len(self.secret_key) < 32:
-                print(f"WARNING: SECRET_KEY in .env is too short ({len(self.secret_key)} chars)")
-                print(f"Using auto-generated key instead ({len(generated_key)} chars)")
+                logger.warning(f"SECRET_KEY in .env is too short ({len(self.secret_key)} chars)")
+                logger.warning(f"Using auto-generated key instead ({len(generated_key)} chars)")
             self.secret_key = generated_key
 
 

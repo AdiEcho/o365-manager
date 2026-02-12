@@ -14,7 +14,7 @@ import {
 import { ShieldCheck, Users, ArrowUp, ArrowDown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { PageHeader } from '@/components/PageHeader'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { CardSkeleton } from '@/components/CardSkeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 
@@ -106,7 +106,7 @@ export function Roles() {
           </CardHeader>
           <CardContent>
             {rolesLoading ? (
-              <LoadingSpinner />
+              <CardSkeleton count={4} />
             ) : roles?.length === 0 ? (
               <EmptyState message="暂无角色信息" icon={ShieldCheck} />
             ) : (
@@ -115,7 +115,7 @@ export function Roles() {
                   <button
                     key={role.id}
                     onClick={() => setSelectedRole(role.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                    className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
                       selectedRole === role.id
                         ? 'border-primary bg-primary/5'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -166,7 +166,7 @@ export function Roles() {
                 </p>
               </div>
             ) : membersLoading ? (
-              <LoadingSpinner />
+              <CardSkeleton count={3} />
             ) : roleMembers?.length === 0 ? (
               <EmptyState message="此角色暂无成员" />
             ) : (
@@ -174,7 +174,7 @@ export function Roles() {
                 {roleMembers?.map((member) => (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-3 border rounded-lg transition-all duration-200 hover:shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <div>
                       <div className="font-medium">{member.displayName}</div>

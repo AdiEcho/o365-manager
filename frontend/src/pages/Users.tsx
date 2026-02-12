@@ -16,7 +16,7 @@ import {
 import { Plus, Trash2, Search, CheckCircle2, XCircle, Loader2, Users as UsersIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { PageHeader } from '@/components/PageHeader'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { TableSkeleton } from '@/components/TableSkeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 
@@ -170,7 +170,7 @@ export function Users() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <LoadingSpinner />
+            <TableSkeleton columns={6} rows={5} />
           ) : users?.length === 0 ? (
             <EmptyState message={debouncedSearch ? '未找到匹配的用户' : '暂无用户，请创建第一个用户'} icon={UsersIcon} />
           ) : (
@@ -188,7 +188,7 @@ export function Users() {
                 </thead>
                 <tbody className="divide-y">
                   {users?.map((user) => (
-                    <tr key={user.id} className="hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors">
+                    <tr key={user.id} className="hover:bg-blue-50/50 dark:hover:bg-blue-900/10 even:bg-gray-50/50 dark:even:bg-gray-800/20 transition-colors">
                       <td className="px-4 py-2">
                         {user.accountEnabled ? (
                           <span className="flex items-center text-xs text-green-600 dark:text-green-400">

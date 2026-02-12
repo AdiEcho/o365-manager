@@ -1,11 +1,15 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User
 from app.services.graph_service import GraphAPIService
 from app.api.o365_users import get_graph_service
-from app.api.deps import get_graph_service_by_id
+from app.api.deps import get_graph_service_by_id, raise_graph_api_error
 from app.auth import get_current_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/o365/reports", tags=["O365 Reports"])
 
@@ -18,8 +22,11 @@ async def get_organization_info(
     try:
         org = await graph_service.get_organization()
         return org
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取组织信息失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取组织信息失败")
 
 
 @router.get("/tenant/{tenant_id}/organization")
@@ -35,7 +42,8 @@ async def get_organization_info_by_tenant(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"获取组织信息失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "获取组织信息失败")
 
 
 @router.get("/onedrive")
@@ -53,8 +61,11 @@ async def get_onedrive_usage_report(
                 "Content-Disposition": f"attachment; filename=onedrive_usage_{period}.csv"
             }
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"生成 OneDrive 报告失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "生成 OneDrive 报告失败")
 
 
 @router.get("/exchange")
@@ -72,5 +83,8 @@ async def get_exchange_usage_report(
                 "Content-Disposition": f"attachment; filename=exchange_usage_{period}.csv"
             }
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"生成 Exchange 报告失败: {e}", exc_info=True)
+        raise_graph_api_error(e, "生成 Exchange 报告失败")

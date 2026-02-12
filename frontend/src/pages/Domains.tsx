@@ -16,7 +16,7 @@ import {
 import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Shield, Globe } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { PageHeader } from '@/components/PageHeader'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { CardSkeleton } from '@/components/CardSkeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 
@@ -104,7 +104,7 @@ export function Domains() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <LoadingSpinner />
+            <CardSkeleton count={3} />
           ) : domains?.length === 0 ? (
             <EmptyState message="暂无域名，请添加第一个域名" icon={Globe} />
           ) : (

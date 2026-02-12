@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Download, Loader2, Building2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { CardSkeleton } from '@/components/CardSkeleton'
 import { PageHeader } from '@/components/PageHeader'
 import { downloadBlob } from '@/utils/download'
 
@@ -78,7 +78,7 @@ export function Reports() {
         </CardHeader>
         <CardContent>
           {orgLoading ? (
-            <LoadingSpinner className="py-8" />
+            <CardSkeleton count={1} />
           ) : organization ? (
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -135,7 +135,7 @@ export function Reports() {
       {/* Reports */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* OneDrive Report */}
-        <Card>
+        <Card className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <CardHeader>
             <CardTitle className="flex items-center">
               <FileText className="h-5 w-5 mr-2" />
@@ -170,7 +170,7 @@ export function Reports() {
         </Card>
 
         {/* Exchange Report */}
-        <Card>
+        <Card className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <CardHeader>
             <CardTitle className="flex items-center">
               <FileText className="h-5 w-5 mr-2" />
